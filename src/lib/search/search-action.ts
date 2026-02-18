@@ -62,7 +62,7 @@ function getDefaultDeps(): SearchActionDeps {
 
 export async function executeSearchAction(
   input: SearchActionInput,
-  deps: SearchActionDeps = getDefaultDeps()
+  deps?: SearchActionDeps
 ): Promise<SearchActionResult> {
   const query = sanitizeQuery(input.query)
 
@@ -75,9 +75,10 @@ export async function executeSearchAction(
   }
 
   try {
-    const response = await deps.adapter.search(query, input.options)
+    const resolvedDeps = deps ?? getDefaultDeps()
+    const response = await resolvedDeps.adapter.search(query, input.options)
 
-    const { error: logError } = await deps.logger.from('search_logs').insert({
+    const { error: logError } = await resolvedDeps.logger.from('search_logs').insert({
       query,
       result_count: response.found,
       category_filter: categoryFilterValue(input.options),
