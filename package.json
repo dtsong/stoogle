@@ -8,8 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:typesense": "RUN_TYPESENSE_INTEGRATION=1 vitest run src/test/typesense.integration.test.ts",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "typesense:bootstrap": "node scripts/typesense/ensure-pages-collection.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -21,7 +23,8 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "tailwind-merge": "^3.4.1"
+    "tailwind-merge": "^3.4.1",
+    "typesense": "^3.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
