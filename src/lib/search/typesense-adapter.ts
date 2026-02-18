@@ -48,7 +48,7 @@ function toFilterBy(options: SearchOptions): string | undefined {
 
 function makeSnippet(content?: string): string | null {
   if (!content) return null
-  return content.length > 280 ? `${content.slice(0, 280).trimEnd()}...` : content
+  return content.length > 300 ? `${content.slice(0, 300).trimEnd()}...` : content
 }
 
 export class TypesenseAdapter implements SearchAdapter {

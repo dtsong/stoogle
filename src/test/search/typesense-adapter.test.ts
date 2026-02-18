@@ -16,6 +16,7 @@ function createCollectionMock(searchImpl: SearchMock) {
 
 describe('TypesenseAdapter', () => {
   it('returns typed results mapped from Typesense hits', async () => {
+    const longContent = 'A'.repeat(330)
     const search = vi.fn().mockResolvedValue({
       found: 1,
       page: 1,
@@ -26,7 +27,7 @@ describe('TypesenseAdapter', () => {
             id: 'doc-1',
             url: 'https://example.com/post',
             title: 'What is Apologetics?',
-            content: 'Apologetics is the defense of the Christian faith.',
+            content: longContent,
             site_name: 'Example Ministry',
             site_domain: 'example.com',
             category_slugs: ['apologetics'],
@@ -47,6 +48,7 @@ describe('TypesenseAdapter', () => {
       categorySlugs: ['apologetics'],
       score: 123,
     })
+    expect(response.results[0].snippet).toHaveLength(303)
   })
 
   it('supports facet filters and pagination options', async () => {
