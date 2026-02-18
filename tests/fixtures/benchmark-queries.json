@@ -1,0 +1,25 @@
+{
+  "phase0": [
+    {
+      "query": "what is apologetics",
+      "expectedDomains": ["carm.org", "str.org"]
+    },
+    {
+      "query": "biblical counseling anxiety",
+      "expectedDomains": ["ccef.org", "biblicalcounseling.com"]
+    },
+    {
+      "query": "creation vs evolution",
+      "expectedDomains": ["answersingenesis.org", "icr.org"]
+    },
+    {
+      "query": "sovereignty of God",
+      "expectedDomains": ["gty.org", "desiringgod.org"]
+    },
+    {
+      "query": "how to study the Bible",
+      "expectedDomains": ["desiringgod.org", "gty.org"]
+    }
+  ],
+  "phase1": []
+}

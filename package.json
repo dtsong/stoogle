@@ -9,9 +9,12 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:typesense": "RUN_TYPESENSE_INTEGRATION=1 vitest run src/test/typesense.integration.test.ts",
+    "test:supabase-seed": "RUN_SUPABASE_INTEGRATION=1 vitest run src/test/seed/phase0-seed.integration.test.ts",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "typesense:bootstrap": "node scripts/typesense/ensure-pages-collection.mjs",
+    "seed:phase0": "node scripts/supabase/seed-phase0.mjs",
+    "test:benchmark": "node scripts/benchmark/run-benchmark.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
