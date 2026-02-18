@@ -1,10 +1,18 @@
 type SearchPageProps = {
-  searchParams: Promise<{ query?: string }>
+  searchParams: Promise<{ query?: string | string[] }>
+}
+
+function firstParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    return value[0] ?? ''
+  }
+
+  return value ?? ''
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams
-  const query = (params.query ?? '').slice(0, 200)
+  const query = firstParam(params.query).slice(0, 200)
 
   return (
     <main className="min-h-screen bg-background px-6 py-16 text-foreground sm:px-10">

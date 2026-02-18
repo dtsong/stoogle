@@ -17,4 +17,13 @@ describe('Search page', () => {
     const heading = screen.getByRole('heading')
     expect(heading.textContent?.length).toBeLessThanOrEqual(220)
   })
+
+  it('normalizes repeated query params to the first value', async () => {
+    const component = await SearchPage({
+      searchParams: Promise.resolve({ query: ['alpha', 'beta'] }),
+    })
+    render(component)
+
+    expect(screen.getByRole('heading', { name: 'Results for "alpha"' })).toBeTruthy()
+  })
 })
