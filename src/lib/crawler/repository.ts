@@ -10,6 +10,30 @@ export class SupabaseCrawlRepository implements CrawlRepository {
     const url = site?.url ?? 'about:blank'
     const client: any = this.client
 
+    const { data: existingJob } = await client
+      .from('crawl_queue')
+      .select('id')
+      .eq('site_id', input.siteId)
+      .eq('url', url)
+      .maybeSingle()
+
+    if (existingJob?.id) {
+      const { error: resetError } = await client
+        .from('crawl_queue')
+        .update({
+          status: 'pending',
+          error: null,
+          attempted_at: null,
+        })
+        .eq('id', existingJob.id)
+
+      if (resetError) {
+        throw new Error(`Failed to reset crawl job: ${resetError.message}`)
+      }
+
+      return existingJob.id
+    }
+
     const { data, error } = await client
       .from('crawl_queue')
       .insert({
