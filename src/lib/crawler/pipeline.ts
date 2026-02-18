@@ -97,6 +97,7 @@ export async function runSiteCrawl(
   input: {
     siteId: string
     triggeredBy?: string
+    pageCap?: number
   },
   deps: PipelineDependencies
 ): Promise<CrawlRunResult> {
@@ -142,6 +143,7 @@ export async function runSiteCrawl(
     const discovered = await discover({
       siteUrl: site.url,
       allowedDomains: [new URL(site.url).hostname.toLowerCase()],
+      pageCap: input.pageCap,
     })
 
     let pagesIndexed = 0
