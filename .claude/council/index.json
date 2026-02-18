@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "workspace": "/Users/danielsong/Development/scripture-tools/stoogle",
+  "sessions": [
+    {
+      "id": "stoogle-scripture-search-engine-20260217-2110",
+      "slug": "stoogle-scripture-search-engine",
+      "idea": "Build Stoogle — a modern curated Christian content search engine inspired by the original Stoogle tool",
+      "created": "2026-02-17T21:10:00-08:00",
+      "updated": "2026-02-17T21:10:00-08:00",
+      "phase": "interview",
+      "status": "active",
+      "agents": [],
+      "skills_used": [],
+      "contract_generated": false,
+      "contract_issue": null,
+      "archived_to": null
+    }
+  ]
+}
