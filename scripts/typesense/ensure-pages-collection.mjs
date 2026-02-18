@@ -3,10 +3,13 @@ import path from 'node:path'
 import process from 'node:process'
 import Typesense from 'typesense'
 
-function required(name) {
-  const value = process.env[name]
-  if (!value) throw new Error(`Missing required environment variable: ${name}`)
-  return value
+function requiredAny(names) {
+  for (const name of names) {
+    const value = process.env[name]
+    if (value) return value
+  }
+
+  throw new Error(`Missing required environment variable: ${names.join(' or ')}`)
 }
 
 function parseNode(url) {
@@ -29,8 +32,8 @@ async function readSchema() {
 }
 
 async function main() {
-  const host = required('TYPESENSE_HOST')
-  const adminKey = required('TYPESENSE_ADMIN_API_KEY')
+  const host = requiredAny(['TYPESENSE_HOST', 'NEXT_PUBLIC_TYPESENSE_HOST'])
+  const adminKey = requiredAny(['TYPESENSE_ADMIN_API_KEY', 'TYPESENSE_API_KEY'])
   const schema = await readSchema()
 
   const client = new Typesense.Client({

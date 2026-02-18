@@ -25,6 +25,6 @@ describe('typesense pages collection schema', () => {
 
   it('marks expected facets', () => {
     const facets = TYPESENSE_PAGES_COLLECTION.fields.filter((field) => field.facet).map((field) => field.name)
-    expect(facets).toEqual(expect.arrayContaining(['site_name', 'category_slugs']))
+    expect(facets).toEqual(expect.arrayContaining(['site_name', 'site_domain', 'category_slugs']))
   })
 })
