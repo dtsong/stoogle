@@ -1,13 +1,10 @@
 import { Button } from '@/components/ui/button'
+import { ResultCard } from '@/components/search/result-card'
 import { Input } from '@/components/ui/input'
 import { executeSearchAction } from '@/lib/search/search-action'
 
 type SearchPageProps = {
   searchParams: Promise<{ query?: string | string[]; page?: string | string[] }>
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function firstParam(value: string | string[] | undefined): string {
@@ -27,27 +24,6 @@ function parsePageParam(value: string | string[] | undefined): number {
 
   return Math.max(1, parsed)
 }
-
-function highlightText(text: string, query: string) {
-  const token = query.trim()
-  if (!token) return text
-
-  const regex = new RegExp(`(${escapeRegExp(token)})`, 'gi')
-  const parts = text.split(regex)
-
-  return parts.map((part, index) => {
-    if (part.toLowerCase() === token.toLowerCase()) {
-      return (
-        <strong key={`${part}-${index}`} className="font-semibold text-foreground">
-          {part}
-        </strong>
-      )
-    }
-
-    return part
-  })
-}
-
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams
   const query = firstParam(params.query).slice(0, 200)
@@ -107,17 +83,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         ) : (
           <div className="grid gap-4">
             {searchResult.data.results.map((result) => (
-              <article key={result.id} className="rounded-xl border border-border bg-card p-5">
-                <a href={result.url} target="_blank" rel="noreferrer" className="text-lg font-semibold text-foreground hover:underline">
-                  {highlightText(result.title, query)}
-                </a>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {highlightText(result.snippet ?? '', query)}
-                </p>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {result.siteName} - {result.url}
-                </p>
-              </article>
+              <ResultCard key={result.id} result={result} query={query} />
             ))}
           </div>
         )}
