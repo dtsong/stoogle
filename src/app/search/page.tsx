@@ -1,5 +1,13 @@
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { executeSearchAction } from '@/lib/search/search-action'
+
 type SearchPageProps = {
-  searchParams: Promise<{ query?: string | string[] }>
+  searchParams: Promise<{ query?: string | string[]; page?: string | string[] }>
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function firstParam(value: string | string[] | undefined): string {
@@ -10,23 +18,125 @@ function firstParam(value: string | string[] | undefined): string {
   return value ?? ''
 }
 
+function parsePageParam(value: string | string[] | undefined): number {
+  const raw = firstParam(value).trim()
+  if (!raw) return 1
+
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed)) return 1
+
+  return Math.max(1, parsed)
+}
+
+function highlightText(text: string, query: string) {
+  const token = query.trim()
+  if (!token) return text
+
+  const regex = new RegExp(`(${escapeRegExp(token)})`, 'gi')
+  const parts = text.split(regex)
+
+  return parts.map((part, index) => {
+    if (part.toLowerCase() === token.toLowerCase()) {
+      return (
+        <strong key={`${part}-${index}`} className="font-semibold text-foreground">
+          {part}
+        </strong>
+      )
+    }
+
+    return part
+  })
+}
+
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams
   const query = firstParam(params.query).slice(0, 200)
+  const page = parsePageParam(params.page)
+
+  const searchResult = await executeSearchAction({
+    query,
+    options: {
+      page,
+      limit: 10,
+    },
+  })
+
+  const totalPages = Math.max(1, Math.ceil(searchResult.data.found / searchResult.data.limit))
+  const hasPreviousPage = page > 1
+  const hasNextPage = page < totalPages
 
   return (
-    <main className="min-h-screen bg-background px-6 py-16 text-foreground sm:px-10">
-      <section className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-        <p className="text-sm font-medium text-muted-foreground uppercase tracking-[0.14em]">
-          Search Results
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {query ? `Results for "${query}"` : 'Enter a search query'}
-        </h1>
-        <p className="text-muted-foreground">
-          Full results rendering arrives in Issue #16. This route now confirms query submission and
-          navigation from the homepage search form.
-        </p>
+    <main className="min-h-screen bg-background px-6 py-8 text-foreground sm:px-10">
+      <section className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        <form action="/search" method="GET" className="sticky top-0 z-20 rounded-xl border border-border bg-background/95 p-3 backdrop-blur">
+          <label htmlFor="query" className="sr-only">
+            Search trusted Christian resources
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              id="query"
+              name="query"
+              type="search"
+              maxLength={200}
+              defaultValue={query}
+              placeholder="Search sermons, theology, apologetics..."
+              className="h-11 text-base"
+            />
+            <Button type="submit" className="h-11 px-6">
+              Search
+            </Button>
+          </div>
+        </form>
+
+        <header className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-[0.14em]">
+            Search Results
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            {searchResult.data.found} results for &ldquo;{query || 'all resources'}&rdquo;
+          </h1>
+          {searchResult.error ? (
+            <p className="text-sm text-destructive">{searchResult.error}</p>
+          ) : null}
+        </header>
+
+        {searchResult.data.results.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No results found. Try a shorter phrase, different spelling, or broader terms.
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {searchResult.data.results.map((result) => (
+              <article key={result.id} className="rounded-xl border border-border bg-card p-5">
+                <a href={result.url} target="_blank" rel="noreferrer" className="text-lg font-semibold text-foreground hover:underline">
+                  {highlightText(result.title, query)}
+                </a>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {highlightText(result.snippet ?? '', query)}
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {result.siteName} - {result.url}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2">
+          <Button variant="outline" disabled={!hasPreviousPage} asChild>
+            <a href={hasPreviousPage ? `/search?query=${encodeURIComponent(query)}&page=${page - 1}` : '#'}>
+              Previous
+            </a>
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </p>
+          <Button variant="outline" disabled={!hasNextPage} asChild>
+            <a href={hasNextPage ? `/search?query=${encodeURIComponent(query)}&page=${page + 1}` : '#'}>
+              Next
+            </a>
+          </Button>
+        </div>
       </section>
     </main>
   )

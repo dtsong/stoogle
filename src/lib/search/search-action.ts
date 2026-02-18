@@ -1,5 +1,3 @@
-'use server'
-
 import type { SearchAdapter } from '@/lib/search/adapter'
 import type { SearchOptions, SearchResponse } from '@/lib/search/types'
 import { TypesenseAdapter } from '@/lib/search/typesense-adapter'
@@ -102,4 +100,7 @@ export async function executeSearchAction(
   }
 }
 
-export const searchAction = executeSearchAction
+export async function searchAction(input: SearchActionInput): Promise<SearchActionResult> {
+  'use server'
+  return executeSearchAction(input)
+}
