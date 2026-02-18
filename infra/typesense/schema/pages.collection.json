@@ -1,0 +1,13 @@
+{
+  "name": "pages",
+  "fields": [
+    { "name": "id", "type": "string" },
+    { "name": "url", "type": "string" },
+    { "name": "title", "type": "string" },
+    { "name": "content", "type": "string" },
+    { "name": "site_name", "type": "string", "facet": true },
+    { "name": "site_domain", "type": "string" },
+    { "name": "category_slugs", "type": "string[]", "facet": true },
+    { "name": "site_weight", "type": "int32" }
+  ]
+}
