@@ -1,0 +1,67 @@
+{
+  "categories": [
+    { "name": "Apologetics", "slug": "apologetics" },
+    { "name": "Biblical Counseling", "slug": "biblical-counseling" },
+    { "name": "Creation & Origins", "slug": "creation-origins" },
+    { "name": "John MacArthur/TMS", "slug": "john-macarthur-tms" },
+    { "name": "Albert Mohler/SBTS", "slug": "albert-mohler-sbts" },
+    { "name": "General Ministry", "slug": "general-ministry" }
+  ],
+  "sites": [
+    { "url": "https://carm.org", "name": "CARM", "description": "Christian apologetics and doctrine resources", "categories": ["apologetics"] },
+    { "url": "https://str.org", "name": "Stand to Reason", "description": "Christian worldview and apologetics", "categories": ["apologetics"] },
+    { "url": "https://reasonablefaith.org", "name": "Reasonable Faith", "description": "William Lane Craig apologetics resources", "categories": ["apologetics"] },
+    { "url": "https://coldcasechristianity.com", "name": "Cold-Case Christianity", "description": "J. Warner Wallace resources", "categories": ["apologetics"] },
+    { "url": "https://crossexamined.org", "name": "Cross Examined", "description": "Frank Turek apologetics ministry", "categories": ["apologetics"] },
+    { "url": "https://bethinking.org", "name": "Be Thinking", "description": "Apologetics and worldview resources", "categories": ["apologetics"] },
+    { "url": "https://apologetics315.com", "name": "Apologetics 315", "description": "Apologetics links and content", "categories": ["apologetics"] },
+
+    { "url": "https://ccef.org", "name": "CCEF", "description": "Biblical counseling training and articles", "categories": ["biblical-counseling"] },
+    { "url": "https://biblicalcounseling.com", "name": "ACBC", "description": "Association of Certified Biblical Counselors", "categories": ["biblical-counseling"] },
+    { "url": "https://peacemaker.net", "name": "Peacemaker Ministries", "description": "Conflict resolution and counseling resources", "categories": ["biblical-counseling"] },
+    { "url": "https://ibcd.org", "name": "IBCD", "description": "Institute for Biblical Counseling and Discipleship", "categories": ["biblical-counseling"] },
+
+    { "url": "https://answersingenesis.org", "name": "Answers in Genesis", "description": "Creation and origins resources", "categories": ["creation-origins"] },
+    { "url": "https://creation.com", "name": "Creation Ministries International", "description": "Creation resources", "categories": ["creation-origins"] },
+    { "url": "https://icr.org", "name": "Institute for Creation Research", "description": "Creation research and apologetics", "categories": ["creation-origins"] },
+
+    { "url": "https://gty.org", "name": "Grace to You", "description": "John MacArthur sermons and resources", "categories": ["john-macarthur-tms"] },
+    { "url": "https://tms.edu", "name": "The Master's Seminary", "description": "Seminary resources and articles", "categories": ["john-macarthur-tms"] },
+    { "url": "https://tmu.edu", "name": "The Master's University", "description": "University resources and articles", "categories": ["john-macarthur-tms"] },
+
+    { "url": "https://albertmohler.com", "name": "Albert Mohler", "description": "Articles and commentary", "categories": ["albert-mohler-sbts"] },
+    { "url": "https://sbts.edu", "name": "Southern Baptist Theological Seminary", "description": "Seminary articles and resources", "categories": ["albert-mohler-sbts"] },
+    { "url": "https://equip.sbts.edu", "name": "EQUIP SBTS", "description": "SBTS content and resources", "categories": ["albert-mohler-sbts"] },
+
+    { "url": "https://desiringgod.org", "name": "Desiring God", "description": "General Christian ministry resources", "categories": ["general-ministry"] },
+    { "url": "https://thegospelcoalition.org", "name": "The Gospel Coalition", "description": "Theology and ministry resources", "categories": ["general-ministry"] },
+    { "url": "https://9marks.org", "name": "9Marks", "description": "Church and ministry articles", "categories": ["general-ministry"] },
+    { "url": "https://ligonier.org", "name": "Ligonier Ministries", "description": "Teaching and discipleship resources", "categories": ["general-ministry"] },
+    { "url": "https://monergism.com", "name": "Monergism", "description": "Reformed theology resources", "categories": ["general-ministry"] },
+    { "url": "https://reformedwiki.com", "name": "Reformed Wiki", "description": "Reformed theology links and references", "categories": ["general-ministry"] },
+    { "url": "https://biblehub.com", "name": "Bible Hub", "description": "Bible study tools", "categories": ["general-ministry"] },
+    { "url": "https://blueletterbible.org", "name": "Blue Letter Bible", "description": "Bible study resources", "categories": ["general-ministry"] },
+    { "url": "https://gotquestions.org", "name": "Got Questions", "description": "Q&A ministry resources", "categories": ["general-ministry"] },
+    { "url": "https://christianitytoday.com", "name": "Christianity Today", "description": "Christian news and feature content", "categories": ["general-ministry"] },
+    { "url": "https://thirdmill.org", "name": "Third Millennium Ministries", "description": "Theological education resources", "categories": ["general-ministry"] },
+    { "url": "https://reformationproject.org", "name": "Reformation Project", "description": "General Christian ministry resources", "categories": ["general-ministry"] },
+    { "url": "https://logos.com/grow", "name": "Logos Grow", "description": "Bible software and study content", "categories": ["general-ministry"] },
+    { "url": "https://biblegateway.com", "name": "Bible Gateway", "description": "Bible reading and reference tools", "categories": ["general-ministry"] },
+    { "url": "https://openbible.info", "name": "OpenBible", "description": "Topical Bible references", "categories": ["general-ministry"] },
+    { "url": "https://biblestudytools.com", "name": "Bible Study Tools", "description": "Bible study and devotional resources", "categories": ["general-ministry"] },
+    { "url": "https://crossway.org", "name": "Crossway", "description": "Publishing and Bible resources", "categories": ["general-ministry"] },
+    { "url": "https://banneroftruth.org", "name": "Banner of Truth", "description": "Reformed books and articles", "categories": ["general-ministry"] },
+    { "url": "https://challies.com", "name": "Tim Challies", "description": "Articles and reviews", "categories": ["general-ministry"] },
+    { "url": "https://tabletalkmagazine.com", "name": "Tabletalk Magazine", "description": "Magazine content", "categories": ["general-ministry"] },
+    { "url": "https://reformation21.org", "name": "Reformation21", "description": "Theological commentary", "categories": ["general-ministry"] },
+    { "url": "https://founders.org", "name": "Founders Ministries", "description": "Reformed Baptist resources", "categories": ["general-ministry"] },
+    { "url": "https://aomin.org", "name": "Alpha and Omega Ministries", "description": "Apologetics and theology resources", "categories": ["general-ministry"] },
+    { "url": "https://triablogue.blogspot.com", "name": "Triablogue", "description": "Blog commentary and theology", "categories": ["general-ministry"] },
+    { "url": "https://prbible.org", "name": "Puritan Reformed Bible", "description": "Bible and study resources", "categories": ["general-ministry"] },
+    { "url": "https://gracebible.org", "name": "Grace Bible", "description": "Church teaching resources", "categories": ["general-ministry"] },
+    { "url": "https://sermonaudio.com", "name": "SermonAudio", "description": "Sermons and media library", "categories": ["general-ministry"] },
+    { "url": "https://heartcrymissionary.com", "name": "HeartCry Missionary Society", "description": "Mission and ministry content", "categories": ["general-ministry"] },
+    { "url": "https://gbc.org", "name": "Grace Bible Church", "description": "Church resources", "categories": ["general-ministry"] },
+    { "url": "https://capitolhillbaptist.org", "name": "Capitol Hill Baptist Church", "description": "Church resources and sermons", "categories": ["general-ministry"] }
+  ]
+}

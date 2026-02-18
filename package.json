@@ -16,6 +16,9 @@
     "seed:phase0": "node scripts/supabase/seed-phase0.mjs",
     "test:benchmark": "node scripts/benchmark/run-benchmark.mjs",
     "crawl:phase0": "tsx scripts/crawler/run-phase0-crawl.ts",
+    "seed:phase1": "node scripts/supabase/seed-phase1.mjs",
+    "crawl:phase1": "tsx scripts/crawler/run-phase1-crawl.ts",
+    "validate:phase1": "node scripts/validation/check-phase1-coverage.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
