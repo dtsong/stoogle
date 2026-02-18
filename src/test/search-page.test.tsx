@@ -47,12 +47,13 @@ describe('Search page', () => {
     expect((searchInput as HTMLInputElement).value.length).toBeLessThanOrEqual(200)
   })
 
-  it('normalizes repeated query params to the first value', async () => {
+  it('normalizes repeated query params and invalid page values', async () => {
     const component = await SearchPage({
-      searchParams: Promise.resolve({ query: ['alpha', 'beta'] }),
+      searchParams: Promise.resolve({ query: ['alpha', 'beta'], page: 'Infinity' }),
     })
     render(component)
 
-    expect(screen.getByRole('heading', { name: 'Results for "alpha"' })).toBeTruthy()
+    expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('alpha')
+    expect(screen.getByText('Page 1 of 1')).toBeTruthy()
   })
 })

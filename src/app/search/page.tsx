@@ -7,6 +7,7 @@ type SearchPageProps = {
   searchParams: Promise<{ query?: string | string[]; page?: string | string[] }>
 }
 
+
 function firstParam(value: string | string[] | undefined): string {
   if (Array.isArray(value)) {
     return value[0] ?? ''
@@ -24,6 +25,7 @@ function parsePageParam(value: string | string[] | undefined): number {
 
   return Math.max(1, parsed)
 }
+
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams
   const query = firstParam(params.query).slice(0, 200)
