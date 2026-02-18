@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runCrawlForSite } from '@/lib/crawler/run-crawl'
+import { PHASE1_SEED_DATA } from '@/lib/seed/phase1'
 
 function loadEnvLocal() {
   const envPath = path.join(process.cwd(), '.env.local')
@@ -43,45 +44,58 @@ function renderProgress(completed: number, total: number, startedAtMs: number) {
   }
 }
 
+function parsePositiveIntegerEnv(name: string, fallback: number): number {
+  const raw = process.env[name]
+  if (!raw) {
+    return fallback
+  }
+
+  const value = Number(raw)
+  if (!Number.isFinite(value) || !Number.isInteger(value) || value <= 0) {
+    throw new Error(`Expected ${name} to be a positive integer, got '${raw}'`)
+  }
+
+  return value
+}
+
 async function main() {
   loadEnvLocal()
 
-  const pageCap = Number(process.env.PHASE1_CRAWL_PAGE_CAP ?? '10')
+  const pageCap = parsePositiveIntegerEnv('PHASE1_CRAWL_PAGE_CAP', 10)
+  const concurrency = parsePositiveIntegerEnv('PHASE1_CRAWL_CONCURRENCY', 5)
   const client = createAdminClient()
 
-  const sites: Array<{ id: string; url: string }> = []
-  const pageSize = 10
-  let offset = 0
+  const phase1SeedUrls = PHASE1_SEED_DATA.sites.map((site) => site.url)
+  const { data, error } = await client
+    .from('sites')
+    .select('id, url')
+    .eq('is_active', true)
+    .in('url', phase1SeedUrls)
 
-  while (sites.length < 50) {
-    const { data, error } = await client
-      .from('sites')
-      .select('id, url, name, is_active')
-      .eq('is_active', true)
-      .range(offset, offset + pageSize - 1)
-
-    if (error) {
-      throw new Error(`Failed to load sites for crawl: ${error.message}`)
-    }
-
-    if (!data || data.length === 0) {
-      break
-    }
-
-    for (const site of data as Array<{ id: string; url: string }>) {
-      sites.push(site)
-      if (sites.length === 50) break
-    }
-
-    offset += pageSize
+  if (error) {
+    throw new Error(`Failed to load phase1 sites for crawl: ${error.message}`)
   }
 
+  const rows = (data ?? []) as Array<{ id: string; url: string }>
+  const siteIdByUrl = new Map(rows.map((site) => [site.url, site.id]))
+
+  const missingUrls = phase1SeedUrls.filter((url) => !siteIdByUrl.has(url))
+  if (missingUrls.length > 0) {
+    throw new Error(
+      `Missing active phase1 sites in database (${missingUrls.length}): ${missingUrls.slice(0, 5).join(', ')}`
+    )
+  }
+
+  const sites = phase1SeedUrls.map((url) => ({
+    id: siteIdByUrl.get(url)!,
+    url,
+  }))
+
   if (sites.length === 0) {
-    throw new Error('Failed to load active sites for crawl: no sites returned')
+    throw new Error('Failed to load active phase1 sites for crawl: no sites returned')
   }
 
   const results = []
-  const concurrency = Number(process.env.PHASE1_CRAWL_CONCURRENCY ?? '5')
   const startedAtMs = Date.now()
   let completed = 0
 
