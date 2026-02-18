@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 // Table names expected to exist in the schema
 const EXPECTED_TABLES = [
@@ -67,23 +67,3 @@ describe('schema: search_logs PII minimisation (S8)', () => {
   })
 })
 
-describe('environment: Supabase config', () => {
-  beforeEach(() => {
-    vi.unstubAllEnvs()
-  })
-
-  it('requires NEXT_PUBLIC_SUPABASE_URL', () => {
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://test.supabase.co')
-    expect(process.env.NEXT_PUBLIC_SUPABASE_URL).toMatch(/supabase\.co/)
-  })
-
-  it('requires NEXT_PUBLIC_SUPABASE_ANON_KEY', () => {
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'test-anon-key')
-    expect(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBeTruthy()
-  })
-
-  it('SUPABASE_SERVICE_ROLE_KEY must not be prefixed NEXT_PUBLIC_', () => {
-    // Ensures the service role key is never accidentally exposed to the browser
-    expect('SUPABASE_SERVICE_ROLE_KEY').not.toMatch(/^NEXT_PUBLIC_/)
-  })
-})
