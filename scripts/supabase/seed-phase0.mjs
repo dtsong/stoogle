@@ -42,7 +42,7 @@ async function main() {
   const seedPath = path.join(process.cwd(), 'supabase/seeds/phase0.seed.json')
   const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'))
 
-  await client.from('categories').upsert(
+  const { error: categoryUpsertError } = await client.from('categories').upsert(
     seed.categories.map((category) => ({
       name: category.name,
       slug: category.slug,
@@ -50,7 +50,11 @@ async function main() {
     { onConflict: 'slug' }
   )
 
-  await client.from('sites').upsert(
+  if (categoryUpsertError) {
+    throw new Error(`Failed to upsert categories: ${categoryUpsertError.message}`)
+  }
+
+  const { error: siteUpsertError } = await client.from('sites').upsert(
     seed.sites.map((site) => ({
       url: site.url,
       name: site.name,
@@ -60,11 +64,25 @@ async function main() {
     { onConflict: 'url' }
   )
 
-  const { data: categoryRows } = await client.from('categories').select('id, slug')
-  const { data: siteRows } = await client.from('sites').select('id, url')
+  if (siteUpsertError) {
+    throw new Error(`Failed to upsert sites: ${siteUpsertError.message}`)
+  }
 
-  const categoryIdBySlug = new Map(categoryRows.map((row) => [row.slug, row.id]))
-  const siteIdByUrl = new Map(siteRows.map((row) => [row.url, row.id]))
+  const { data: categoryRows, error: categorySelectError } = await client
+    .from('categories')
+    .select('id, slug')
+  const { data: siteRows, error: siteSelectError } = await client.from('sites').select('id, url')
+
+  if (categorySelectError) {
+    throw new Error(`Failed to read categories: ${categorySelectError.message}`)
+  }
+
+  if (siteSelectError) {
+    throw new Error(`Failed to read sites: ${siteSelectError.message}`)
+  }
+
+  const categoryIdBySlug = new Map((categoryRows ?? []).map((row) => [row.slug, row.id]))
+  const siteIdByUrl = new Map((siteRows ?? []).map((row) => [row.url, row.id]))
 
   const siteCategories = []
   for (const site of seed.sites) {
@@ -78,9 +96,13 @@ async function main() {
     }
   }
 
-  await client.from('site_categories').upsert(siteCategories, {
+  const { error: mappingError } = await client.from('site_categories').upsert(siteCategories, {
     onConflict: 'site_id,category_id',
   })
+
+  if (mappingError) {
+    throw new Error(`Failed to upsert site_categories: ${mappingError.message}`)
+  }
 
   console.log('Seeded phase 0 data (10 sites, 6 categories) successfully.')
 }
