@@ -30,6 +30,7 @@ Stoogle is a curated search engine that indexes ~50 trusted Christian ministry w
 | Crawler | Crawlee + Cheerio |
 | Styling | Tailwind CSS + shadcn/ui |
 | Search UI | react-instantsearch + typesense-instantsearch-adapter |
+| Testing | Vitest + React Testing Library + Playwright + MSW |
 | Hosting | Vercel (free) + Typesense Cloud ($10/mo) |
 
 ---
@@ -49,6 +50,10 @@ Stoogle is a curated search engine that indexes ~50 trusted Christian ministry w
 - [ ] Search queries are logged to `search_logs` table (query, result_count, timestamp)
 - [ ] Query input is capped at 200 characters server-side
 - [ ] All search requests go through a server action (no client-side Typesense key)
+- [ ] Snippets capped at 300 characters in search results
+- [ ] Full article text is never displayed — results always link to the source
+- [ ] Respect `noindex` meta tag (skip page during crawl)
+- [ ] Honor `nosnippet` meta tag — suppress snippet text for that page, show title + URL only
 
 ### F2: Category Faceted Filtering
 
@@ -75,6 +80,19 @@ Stoogle is a curated search engine that indexes ~50 trusted Christian ministry w
 - [ ] Crawler runs as Vercel Cron (weekly, per-domain chunks within 60s limit)
 - [ ] Crawl status tracked in `crawl_queue` table (pending/running/done/failed)
 - [ ] User-Agent header identifies Stoogle: `Stoogle/1.0 (curated scripture search)`
+- [ ] URLs normalized before storage: lowercase hostname, strip trailing slash, strip fragments, strip `utm_*` params, enforce `https`
+- [ ] Respect `<link rel="canonical">` — index canonical URL only
+- [ ] Page discovery order: sitemap entries first, then BFS discovery order (within the 500/site cap)
+- [ ] Non-HTML resources (PDFs, images, audio) are skipped
+- [ ] When a site is set to `is_active = false`, its pages are deleted from Typesense and `crawl_pages` records are soft-deleted
+- [ ] Pages returning 404/410 on re-crawl are removed from Typesense index
+- [ ] Content for removed sites purged within 7 days
+
+**Execution Model:**
+- Each Vercel Cron invocation processes ONE domain (failure isolation)
+- If a domain exceeds 60s, progress is saved in `crawl_pages` and resumes on next invocation
+- Weekly crawl of 50 sites ≈ 50 cron invocations spread across the week
+- Changed or new content appears in search within 7 days (p95)
 
 ### F4: Admin Panel — Site Management
 
@@ -89,6 +107,7 @@ Stoogle is a curated search engine that indexes ~50 trusted Christian ministry w
 - [ ] Admin can trigger a manual re-crawl for a specific site
 - [ ] "Test Search" link opens public search in new tab
 - [ ] Changes to the site list take effect on next crawl cycle
+- [ ] Initial admin provisioned via Supabase Auth email allowlist in environment config
 
 ### F5: Result Reporting
 
@@ -97,7 +116,9 @@ Stoogle is a curated search engine that indexes ~50 trusted Christian ministry w
 **Acceptance Criteria:**
 - [ ] Each result card has a small flag icon (low opacity, non-intrusive)
 - [ ] Clicking the flag shows a dropdown: Inappropriate / Broken Link / Other
-- [ ] Submitting a report sends an email to the admin address
+- [ ] Submitting a report sends an email to the admin address via Resend (free tier, 100 emails/day)
+- [ ] Rate limited: max 3 reports per IP per hour
+- [ ] Report payload: page URL, reason (enum: Inappropriate / Broken Link / Other), optional freeform text (500 char cap)
 - [ ] Toast notification confirms: "Report sent. Thank you."
 - [ ] No moderation queue UI at MVP (email-only workflow)
 
@@ -136,6 +157,8 @@ Stoogle is a curated search engine that indexes ~50 trusted Christian ministry w
 | S5 | Admin auth rate-limited (5 attempts → 15min lockout) | High |
 | S6 | Search results rendered as text only (no dangerouslySetInnerHTML) | High |
 | S7 | Crawler respects robots.txt with per-domain rate limits | Medium |
+| S8 | `search_logs` stores query + result_count + category_filter + timestamp only (no IP, no user-agent, no session ID). 90-day retention with auto-cleanup via Supabase `pg_cron` | High |
+| S9 | Supabase RLS policies enforce admin-only write access on `sites`, `crawl_queue`, `categories`, `site_categories`. `search_logs` and `crawl_pages` are append-only from server actions (no client writes) | High |
 
 ---
 
@@ -167,7 +190,43 @@ site_weight: int32 (reserved for future fairness tuning)
 
 ---
 
-## 8. Implementation Plan
+## 8. Development Methodology
+
+All features are implemented using **Test-Driven Development (TDD)** with **Behavior-Driven Development (BDD)** acceptance tests to ensure testability, verifiability, and regression prevention.
+
+### Testing Strategy
+
+| Layer | Tool | Scope |
+|-------|------|-------|
+| Unit tests | Vitest | Pure functions: URL normalization, content hashing, sanitization, query validation |
+| Integration tests | Vitest + MSW | Server actions, Typesense adapter, Supabase queries, crawler pipeline |
+| Component tests | React Testing Library | Search bar, result cards, facet filters, admin forms |
+| E2E / BDD acceptance | Playwright | Full user flows: search → filter → click result, admin login → add site → trigger crawl |
+
+### TDD Workflow (per feature)
+
+1. Write failing acceptance test(s) derived from the feature's acceptance criteria (F1-F7)
+2. Write failing unit/integration tests for the specific behavior
+3. Implement minimum code to pass tests
+4. Refactor while keeping tests green
+5. Verify acceptance criteria checklist items via automated tests where possible
+
+### BDD Acceptance Mapping
+
+Each F1-F7 acceptance criterion maps to at least one automated test. Tests are named to mirror acceptance criteria for traceability:
+
+- `F1: search returns results within 500ms` → integration test against Typesense
+- `F3: crawler skips pages with noindex meta` → unit test on HTML parser
+- `F4: admin login rate-limited after 5 failures` → integration test against Supabase Auth
+- `F5: report rate-limited to 3 per IP per hour` → integration test on report endpoint
+
+### CI Gate
+
+All PRs must pass the full test suite (lint + typecheck + unit + integration + E2E) before merge. See T26.
+
+---
+
+## 9. Implementation Plan
 
 ### Phase 0 — Foundation (Week 1, ~40 hrs)
 
@@ -228,7 +287,7 @@ site_weight: int32 (reserved for future fairness tuning)
 
 ---
 
-## 9. Success Metrics
+## 10. Success Metrics
 
 | Metric | Target | Timeframe |
 |--------|--------|-----------|
@@ -240,7 +299,18 @@ site_weight: int32 (reserved for future fairness tuning)
 
 ---
 
-## 10. Out of Scope (Future Phases)
+## 11. Risks
+
+| Risk | Mitigation |
+|------|-----------|
+| Vercel 60s Cron limit too tight for large sites | Progress saved in `crawl_pages`; resumes on next invocation. If consistently insufficient, migrate crawler to Railway/Fly.io worker (~$5/mo) |
+| Duplicate pages from URL variants | URL normalization + canonical tag handling (see F3) |
+| Stale content after site removal | Automated purge on deactivation + 7-day cleanup window (see F3) |
+| Domains repeatedly exceed 60s cron budget | Reduce BFS depth and page cap for that site; alert admin via `crawl_queue` `error_message` |
+
+---
+
+## 12. Out of Scope (Future Phases)
 
 - User accounts, saved searches, search history
 - AI-generated summaries (requires human theological review gate)
@@ -249,10 +319,14 @@ site_weight: int32 (reserved for future fairness tuning)
 - Playwright support for JS-rendered sites
 - Multi-language / transliteration support
 - Mobile app / PWA
+- PDF indexing
+- Audio/video content indexing
+- Non-English content and multi-language tokenization
+- Per-page content classification (categories remain site-level for MVP)
 
 ---
 
-## 11. Curated Site List (Initial 50)
+## 13. Curated Site List (Initial 50)
 
 ### Apologetics
 - carm.org (CARM)
@@ -321,11 +395,11 @@ site_weight: int32 (reserved for future fairness tuning)
 
 ---
 
-## 12. Acceptance Contract
+## 14. Acceptance Contract
 
 This PRD is considered complete when:
 1. All F1-F7 acceptance criteria pass
-2. All S1-S7 security requirements are verified
+2. All S1-S9 security requirements are verified
 3. Phase 0-2 gate criteria are met
 4. MVP success metrics are being tracked
 5. Soft launch group (10-20 users) has been onboarded
