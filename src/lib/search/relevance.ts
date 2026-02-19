@@ -1,6 +1,8 @@
+import searchRelevanceConfig from '../../../config/search-relevance.json'
+
 export const SEARCH_RELEVANCE_CONFIG = {
-  queryBy: 'title,content',
-  queryByWeights: '6,1',
-  numTypos: '1,2',
-  typoTokensThreshold: 1,
+  queryBy: searchRelevanceConfig.queryBy,
+  queryByWeights: searchRelevanceConfig.queryByWeights,
+  numTypos: searchRelevanceConfig.numTypos,
+  typoTokensThreshold: searchRelevanceConfig.typoTokensThreshold,
 } as const

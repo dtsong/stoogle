@@ -1,0 +1,6 @@
+{
+  "queryBy": "title,content",
+  "queryByWeights": "6,1",
+  "numTypos": "1,2",
+  "typoTokensThreshold": 1
+}

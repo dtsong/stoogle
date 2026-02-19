@@ -57,7 +57,12 @@ async function clearAttempts(email: string) {
 
 async function recordFailedAttempt(email: string) {
   const current = await getAttempt(email)
-  const nextCount = (current?.failed_attempts ?? 0) + 1
+  const currentLockedUntil = current?.locked_until ?? null
+  const lockExpired =
+    currentLockedUntil !== null &&
+    new Date(currentLockedUntil).getTime() <= Date.now()
+
+  const nextCount = (lockExpired ? 0 : (current?.failed_attempts ?? 0)) + 1
   const lockedUntil =
     nextCount >= MAX_FAILED_ATTEMPTS
       ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000).toISOString()

@@ -3,6 +3,10 @@ import path from 'node:path'
 import process from 'node:process'
 import Typesense from 'typesense'
 
+const searchRelevanceConfig = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), 'config/search-relevance.json'), 'utf8')
+)
+
 function parseArg(name, fallback) {
   const arg = process.argv.find((value) => value.startsWith(`--${name}=`))
   if (!arg) return fallback
@@ -84,8 +88,10 @@ async function main() {
     const start = Date.now()
     const searchResult = await client.collections('pages').documents().search({
       q: item.query,
-      query_by: 'title,content',
-      query_by_weights: '4,1',
+      query_by: searchRelevanceConfig.queryBy,
+      query_by_weights: searchRelevanceConfig.queryByWeights,
+      num_typos: searchRelevanceConfig.numTypos,
+      typo_tokens_threshold: searchRelevanceConfig.typoTokensThreshold,
       per_page: 10,
     })
     const latencyMs = Date.now() - start

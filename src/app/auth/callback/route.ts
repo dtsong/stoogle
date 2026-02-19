@@ -4,11 +4,18 @@ import { setAdminSessionCookie } from '@/lib/admin/auth'
 import { env } from '@/lib/env'
 import type { Database } from '@/types/supabase'
 
+function normalizeInternalNextPath(nextValue: string | null): string {
+  if (!nextValue) return '/admin'
+  if (!nextValue.startsWith('/')) return '/admin'
+  if (nextValue.startsWith('//')) return '/admin'
+  return nextValue
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
-  const nextPath = url.searchParams.get('next') ?? '/admin'
+  const nextPath = normalizeInternalNextPath(url.searchParams.get('next'))
 
   if (!tokenHash || !type) {
     return NextResponse.redirect(new URL('/admin/login?error=Invalid+magic+link', request.url))
