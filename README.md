@@ -16,6 +16,31 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Quality Gates
+
+The local and CI quality gates are aligned:
+
+- `npm run lint`
+- `npm test`
+- `npm run build`
+
+These same commands run in `.github/workflows/ci.yml`.
+
+### Pre-commit setup
+
+Install hooks once after cloning:
+
+```bash
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Run checks manually at any time:
+
+```bash
+pre-commit run --all-files
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
