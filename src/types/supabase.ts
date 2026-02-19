@@ -37,6 +37,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -60,6 +61,7 @@ export type Database = {
           description?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       site_categories: {
         Row: {
@@ -74,6 +76,22 @@ export type Database = {
           site_id?: string
           category_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: 'site_categories_site_id_fkey'
+            columns: ['site_id']
+            isOneToOne: false
+            referencedRelation: 'sites'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'site_categories_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: ['id']
+          }
+        ]
       }
       crawl_queue: {
         Row: {
@@ -109,6 +127,15 @@ export type Database = {
           attempted_at?: string | null
           error?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: 'crawl_queue_site_id_fkey'
+            columns: ['site_id']
+            isOneToOne: false
+            referencedRelation: 'sites'
+            referencedColumns: ['id']
+          }
+        ]
       }
       crawl_pages: {
         Row: {
@@ -147,6 +174,15 @@ export type Database = {
           deleted_at?: string | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: 'crawl_pages_site_id_fkey'
+            columns: ['site_id']
+            isOneToOne: false
+            referencedRelation: 'sites'
+            referencedColumns: ['id']
+          }
+        ]
       }
       search_logs: {
         Row: {
@@ -170,6 +206,28 @@ export type Database = {
           category_filter?: string | null
           created_at?: string
         }
+        Relationships: []
+      }
+      admin_login_attempts: {
+        Row: {
+          email: string
+          failed_attempts: number
+          locked_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          failed_attempts?: number
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          failed_attempts?: number
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: Record<string, never>
