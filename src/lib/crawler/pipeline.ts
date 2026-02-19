@@ -1,6 +1,7 @@
 import { discoverPages } from '@/lib/crawler/discovery'
 import { fetchAndExtractPage } from '@/lib/crawler/extraction'
 import { buildCrawlPageUpdate, shouldRemoveFromIndex } from '@/lib/crawler/hashing'
+import type { CrawlEventCallback } from '@/lib/crawler/events'
 
 export type CrawlSite = {
   id: string
@@ -76,6 +77,8 @@ type PipelineDependencies = {
   discover?: typeof discoverPages
   extract?: typeof fetchAndExtractPage
   now?: () => Date
+  onEvent?: CrawlEventCallback
+  perfNow?: () => number
 }
 
 export type CrawlRunResult = {
@@ -98,12 +101,17 @@ export async function runSiteCrawl(
     siteId: string
     triggeredBy?: string
     pageCap?: number
+    signal?: AbortSignal
   },
   deps: PipelineDependencies
 ): Promise<CrawlRunResult> {
   const discover = deps.discover ?? discoverPages
   const extract = deps.extract ?? fetchAndExtractPage
   const now = deps.now ?? defaultNow
+  const emit = deps.onEvent ?? (() => {})
+  const perfNow = deps.perfNow ?? (() => performance.now())
+
+  const siteStartTime = perfNow()
 
   const crawlJobId = await deps.repository.createCrawlJob({
     siteId: input.siteId,
@@ -120,6 +128,14 @@ export async function runSiteCrawl(
     if (!site) {
       throw new Error(`Site not found: ${input.siteId}`)
     }
+
+    emit({
+      type: 'site-start',
+      siteId: site.id,
+      url: site.url,
+      name: site.name,
+      crawlJobId,
+    })
 
     if (!site.isActive) {
       const deletedAt = now().toISOString()
@@ -140,25 +156,52 @@ export async function runSiteCrawl(
       }
     }
 
+    if (input.signal?.aborted) {
+      throw new Error('Crawl aborted before discovery')
+    }
+
+    const discoverStart = perfNow()
     const discovered = await discover({
       siteUrl: site.url,
       allowedDomains: [new URL(site.url).hostname.toLowerCase()],
       pageCap: input.pageCap,
+      signal: input.signal,
+    })
+    emit({
+      type: 'discovery-complete',
+      urlCount: discovered.urls.length,
+      usedSitemap: discovered.usedSitemap,
+      usedBfs: discovered.usedBfs,
+      durationMs: perfNow() - discoverStart,
     })
 
     let pagesIndexed = 0
     let pagesProcessed = 0
     const errors: Array<{ url: string; error: string }> = []
     const siteDomain = new URL(site.url).hostname.toLowerCase()
+    const totalPages = discovered.urls.length
 
     for (const pageUrl of discovered.urls) {
+      if (input.signal?.aborted) break
+
       pagesProcessed += 1
 
       try {
-        const extracted = await extract(pageUrl)
+        const extractStart = perfNow()
+        const extracted = await extract(pageUrl, undefined, input.signal)
+        const extractionMs = perfNow() - extractStart
         const crawledAt = now().toISOString()
 
+        emit({
+          type: 'page-processed',
+          pageUrl,
+          pageIndex: pagesProcessed,
+          totalPages,
+          extractionMs,
+        })
+
         if (!extracted) {
+          emit({ type: 'page-skipped', pageUrl, reason: 'extraction-null' })
           const existing = await deps.repository.findPage(site.id, pageUrl)
           if (existing?.typesenseId) {
             await deps.index.removeById(existing.typesenseId)
@@ -167,6 +210,7 @@ export async function runSiteCrawl(
         }
 
         if (extracted.noindex) {
+          emit({ type: 'page-skipped', pageUrl, reason: 'noindex' })
           continue
         }
 
@@ -179,6 +223,7 @@ export async function runSiteCrawl(
         })
 
         if (shouldRemoveFromIndex(200)) {
+          emit({ type: 'page-skipped', pageUrl, reason: 'removed-from-index' })
           if (existing?.typesenseId) {
             await deps.index.removeById(existing.typesenseId)
           }
@@ -186,6 +231,7 @@ export async function runSiteCrawl(
         }
 
         if (!pageUpdate.shouldUpsert) {
+          emit({ type: 'page-skipped', pageUrl, reason: 'unchanged' })
           await deps.repository.touchPage({
             siteId: site.id,
             url: pageUrl,
@@ -218,14 +264,34 @@ export async function runSiteCrawl(
           deletedAt: null,
         })
 
+        emit({
+          type: 'page-indexed',
+          pageUrl,
+          typesenseId,
+          contentChanged: true,
+        })
+
         pagesIndexed += 1
       } catch (error) {
+        emit({
+          type: 'page-error',
+          pageUrl,
+          error: error instanceof Error ? error.message : 'Unknown crawl error',
+        })
         errors.push({
           url: pageUrl,
           error: error instanceof Error ? error.message : 'Unknown crawl error',
         })
       }
     }
+
+    emit({
+      type: 'site-complete',
+      pagesProcessed,
+      pagesIndexed,
+      errorCount: errors.length,
+      durationMs: perfNow() - siteStartTime,
+    })
 
     await deps.repository.updateCrawlJob(crawlJobId, {
       status: 'completed',
