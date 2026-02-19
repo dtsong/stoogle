@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import SearchPage from '@/app/search/page'
 
-vi.mock('@/lib/search/search-action', () => ({
-  executeSearchAction: vi.fn(async ({ query }) => ({
+const { executeSearchActionMock } = vi.hoisted(() => ({
+  executeSearchActionMock: vi.fn(async ({ query }) => ({
     ok: true,
     error: null,
     data: {
@@ -11,6 +11,10 @@ vi.mock('@/lib/search/search-action', () => ({
       page: 1,
       limit: 10,
       found: 1,
+      facets: {
+        siteNames: [{ value: 'Example Site', count: 1 }],
+        categorySlugs: [{ value: 'apologetics', count: 1 }],
+      },
       results: [
         {
           id: 'doc-1',
@@ -25,6 +29,10 @@ vi.mock('@/lib/search/search-action', () => ({
       ],
     },
   })),
+}))
+
+vi.mock('@/lib/search/search-action', () => ({
+  executeSearchAction: executeSearchActionMock,
 }))
 
 describe('Search page', () => {
@@ -55,5 +63,32 @@ describe('Search page', () => {
 
     expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('alpha')
     expect(screen.getByText('Page 1 of 1')).toBeTruthy()
+  })
+
+  it('passes selected facets into search action and renders active filters', async () => {
+    executeSearchActionMock.mockClear()
+
+    const component = await SearchPage({
+      searchParams: Promise.resolve({
+        query: 'apologetics',
+        site: ['Example Site'],
+        category: ['apologetics'],
+      }),
+    })
+    render(component)
+
+    expect(executeSearchActionMock).toHaveBeenCalledWith({
+      query: 'apologetics',
+      options: {
+        page: 1,
+        limit: 10,
+        siteNames: ['Example Site'],
+        categorySlugs: ['apologetics'],
+      },
+    })
+
+    expect(screen.getByText('Active Filters')).toBeTruthy()
+    expect(screen.getByText('Site: Example Site x')).toBeTruthy()
+    expect(screen.getByText('Category: apologetics x')).toBeTruthy()
   })
 })

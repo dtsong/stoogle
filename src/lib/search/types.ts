@@ -1,8 +1,14 @@
 export type SearchOptions = {
   page?: number
   limit?: number
+  siteNames?: string[]
   siteDomains?: string[]
   categorySlugs?: string[]
+}
+
+export type SearchFacet = {
+  value: string
+  count: number
 }
 
 export type SearchResult = {
@@ -22,4 +28,8 @@ export type SearchResponse = {
   limit: number
   found: number
   results: SearchResult[]
+  facets: {
+    siteNames: SearchFacet[]
+    categorySlugs: SearchFacet[]
+  }
 }

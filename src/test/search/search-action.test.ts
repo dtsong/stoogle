@@ -8,6 +8,10 @@ function createResponse(query: string, found = 2): SearchResponse {
     page: 1,
     limit: 10,
     found,
+    facets: {
+      siteNames: [{ value: 'Example', count: 1 }],
+      categorySlugs: [{ value: 'general-ministry', count: 1 }],
+    },
     results: [
       {
         id: 'doc-1',
