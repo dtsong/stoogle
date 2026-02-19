@@ -1,6 +1,7 @@
 import type { SearchAdapter } from '@/lib/search/adapter'
 import { SearchAdapterError } from '@/lib/search/adapter'
-import type { SearchOptions, SearchResponse } from '@/lib/search/types'
+import { SEARCH_RELEVANCE_CONFIG } from '@/lib/search/relevance'
+import type { SearchFacet, SearchOptions, SearchResponse } from '@/lib/search/types'
 import { createTypesenseSearchClient } from '@/lib/typesense/client'
 
 type TypesenseHitDocument = {
@@ -22,6 +23,10 @@ type TypesenseSearchResult = {
   found: number
   page: number
   hits?: TypesenseHit[]
+  facet_counts?: Array<{
+    field_name: string
+    counts?: Array<{ value: string; count: number }>
+  }>
 }
 
 type SearchCollection = {
@@ -30,8 +35,42 @@ type SearchCollection = {
   }
 }
 
+function defaultFacets() {
+  return {
+    siteNames: [] as SearchFacet[],
+    categorySlugs: [] as SearchFacet[],
+  }
+}
+
+function parseFacetCounts(result: TypesenseSearchResult): SearchResponse['facets'] {
+  const facets = defaultFacets()
+
+  for (const facetGroup of result.facet_counts ?? []) {
+    if (!facetGroup.counts || facetGroup.counts.length === 0) continue
+
+    if (facetGroup.field_name === 'site_name') {
+      facets.siteNames = facetGroup.counts
+        .filter((entry) => entry.count > 0)
+        .map((entry) => ({ value: entry.value, count: entry.count }))
+    }
+
+    if (facetGroup.field_name === 'category_slugs') {
+      facets.categorySlugs = facetGroup.counts
+        .filter((entry) => entry.count > 0)
+        .map((entry) => ({ value: entry.value, count: entry.count }))
+    }
+  }
+
+  return facets
+}
+
 function toFilterBy(options: SearchOptions): string | undefined {
   const filters: string[] = []
+
+  if (options.siteNames && options.siteNames.length > 0) {
+    const names = options.siteNames.map((name) => `"${name}"`).join(',')
+    filters.push(`site_name:[${names}]`)
+  }
 
   if (options.siteDomains && options.siteDomains.length > 0) {
     const domains = options.siteDomains.map((domain) => `\"${domain}\"`).join(',')
@@ -76,14 +115,19 @@ export class TypesenseAdapter implements SearchAdapter {
         limit,
         found: 0,
         results: [],
+        facets: defaultFacets(),
       }
     }
 
     try {
       const result = await this.collection.documents().search({
         q: sanitizedQuery,
-        query_by: 'title,content',
-        query_by_weights: '4,1',
+        query_by: SEARCH_RELEVANCE_CONFIG.queryBy,
+        query_by_weights: SEARCH_RELEVANCE_CONFIG.queryByWeights,
+        num_typos: SEARCH_RELEVANCE_CONFIG.numTypos,
+        typo_tokens_threshold: SEARCH_RELEVANCE_CONFIG.typoTokensThreshold,
+        facet_by: 'site_name,category_slugs',
+        max_facet_values: 50,
         page,
         per_page: limit,
         filter_by: toFilterBy(options),
@@ -94,6 +138,7 @@ export class TypesenseAdapter implements SearchAdapter {
         page: result.page,
         limit,
         found: result.found,
+        facets: parseFacetCounts(result),
         results: (result.hits ?? []).map((hit) => ({
           id: hit.document.id,
           url: hit.document.url,

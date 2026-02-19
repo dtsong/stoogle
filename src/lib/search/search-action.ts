@@ -48,6 +48,10 @@ function emptyResponse(query: string, options?: SearchOptions): SearchResponse {
     limit: options?.limit ?? 10,
     found: 0,
     results: [],
+    facets: {
+      siteNames: [],
+      categorySlugs: [],
+    },
   }
 }
 
