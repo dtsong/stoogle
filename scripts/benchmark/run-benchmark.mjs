@@ -62,6 +62,7 @@ async function main() {
   const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'))
   const key = phase === '1' ? 'phase1' : 'phase0'
   const queries = fixture[key]
+  const relevanceOutputPath = parseArg('output', '')
 
   if (!Array.isArray(queries) || queries.length === 0) {
     throw new Error(`No benchmark queries configured for ${key}`)
@@ -94,11 +95,16 @@ async function main() {
       .map((hit) => hit.document.site_domain)
       .filter(Boolean)
 
-    const matched = item.expectedDomains.some((domain) => resultDomains.includes(domain))
+    const expectedTopDomains = item.expectedTopDomains ?? []
+    const minMatchCount = Number(item.minMatchCount ?? 1)
+    const matchedCount = expectedTopDomains.filter((domain) => resultDomains.includes(domain)).length
+    const matched = matchedCount >= minMatchCount
 
     results.push({
       query: item.query,
-      expectedDomains: item.expectedDomains,
+      expectedTopDomains,
+      minMatchCount,
+      matchedCount,
       resultDomains,
       found: searchResult.found,
       latencyMs,
@@ -116,6 +122,10 @@ async function main() {
   }
 
   console.log(JSON.stringify(summary, null, 2))
+
+  if (relevanceOutputPath) {
+    fs.writeFileSync(relevanceOutputPath, `${JSON.stringify(summary, null, 2)}\n`)
+  }
 
   if (summary.passed !== summary.total || summary.zeroResults > 0) {
     process.exit(1)

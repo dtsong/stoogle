@@ -2,24 +2,50 @@
   "phase0": [
     {
       "query": "what is apologetics",
-      "expectedDomains": ["carm.org", "str.org"]
+      "expectedTopDomains": ["carm.org", "str.org"],
+      "minMatchCount": 1
     },
     {
       "query": "biblical counseling anxiety",
-      "expectedDomains": ["ccef.org", "biblicalcounseling.com"]
+      "expectedTopDomains": ["ccef.org", "biblicalcounseling.com"],
+      "minMatchCount": 1
     },
     {
       "query": "creation vs evolution",
-      "expectedDomains": ["answersingenesis.org", "icr.org"]
+      "expectedTopDomains": ["answersingenesis.org", "icr.org"],
+      "minMatchCount": 1
     },
     {
       "query": "sovereignty of God",
-      "expectedDomains": ["gty.org", "desiringgod.org"]
+      "expectedTopDomains": ["gty.org", "desiringgod.org"],
+      "minMatchCount": 1
     },
     {
       "query": "how to study the Bible",
-      "expectedDomains": ["desiringgod.org", "gty.org"]
+      "expectedTopDomains": ["desiringgod.org", "gty.org"],
+      "minMatchCount": 1
     }
   ],
-  "phase1": []
+  "phase1": [
+    { "query": "what is apologetics", "expectedTopDomains": ["carm.org", "str.org"], "minMatchCount": 1 },
+    { "query": "resurrection evidence", "expectedTopDomains": ["reasonablefaith.org", "coldcasechristianity.com"], "minMatchCount": 1 },
+    { "query": "biblical counseling anger", "expectedTopDomains": ["ccef.org", "biblicalcounseling.com"], "minMatchCount": 1 },
+    { "query": "conflict resolution bible", "expectedTopDomains": ["peacemaker.net", "ibcd.org"], "minMatchCount": 1 },
+    { "query": "young earth creation", "expectedTopDomains": ["answersingenesis.org", "creation.com"], "minMatchCount": 1 },
+    { "query": "fossil record flood", "expectedTopDomains": ["icr.org", "answersingenesis.org"], "minMatchCount": 1 },
+    { "query": "john macarthur sermons", "expectedTopDomains": ["gty.org", "tms.edu"], "minMatchCount": 1 },
+    { "query": "masters seminary theology", "expectedTopDomains": ["tms.edu", "tmu.edu"], "minMatchCount": 1 },
+    { "query": "albert mohler commentary", "expectedTopDomains": ["albertmohler.com", "sbts.edu"], "minMatchCount": 1 },
+    { "query": "southern baptist seminary", "expectedTopDomains": ["sbts.edu", "equip.sbts.edu"], "minMatchCount": 1 },
+    { "query": "christian worldview articles", "expectedTopDomains": ["thegospelcoalition.org", "desiringgod.org"], "minMatchCount": 1 },
+    { "query": "church membership 9marks", "expectedTopDomains": ["9marks.org", "thegospelcoalition.org"], "minMatchCount": 1 },
+    { "query": "reformed theology resources", "expectedTopDomains": ["monergism.com", "ligonier.org"], "minMatchCount": 1 },
+    { "query": "bible commentary tools", "expectedTopDomains": ["biblehub.com", "blueletterbible.org"], "minMatchCount": 1 },
+    { "query": "christian questions and answers", "expectedTopDomains": ["gotquestions.org", "christianitytoday.com"], "minMatchCount": 1 },
+    { "query": "theological education online", "expectedTopDomains": ["thirdmill.org", "logos.com"], "minMatchCount": 1 },
+    { "query": "daily devotional article", "expectedTopDomains": ["challies.com", "tabletalkmagazine.com"], "minMatchCount": 1 },
+    { "query": "reformed baptist resources", "expectedTopDomains": ["founders.org", "banneroftruth.org"], "minMatchCount": 1 },
+    { "query": "sermon audio archive", "expectedTopDomains": ["sermonaudio.com", "gty.org"], "minMatchCount": 1 },
+    { "query": "missionary society resources", "expectedTopDomains": ["heartcrymissionary.com", "capitolhillbaptist.org"], "minMatchCount": 1 }
+  ]
 }

@@ -6,15 +6,18 @@ describe('benchmark query fixtures', () => {
     expect(benchmarkFixture.phase0).toHaveLength(5)
   })
 
-  it('phase0 entries have query and expected domains', () => {
+  it('phase0 entries have query, expected domains, and threshold', () => {
     for (const entry of benchmarkFixture.phase0) {
       expect(entry.query).toBeTruthy()
-      expect(Array.isArray(entry.expectedDomains)).toBe(true)
-      expect(entry.expectedDomains.length).toBeGreaterThan(0)
+      expect(Array.isArray(entry.expectedTopDomains)).toBe(true)
+      expect(entry.expectedTopDomains.length).toBeGreaterThan(0)
+      expect(typeof entry.minMatchCount).toBe('number')
+      expect(entry.minMatchCount).toBeGreaterThan(0)
     }
   })
 
-  it('initial phase1 fixture exists for later expansion', () => {
+  it('phase1 fixture includes 20 benchmark queries', () => {
     expect(Array.isArray(benchmarkFixture.phase1)).toBe(true)
+    expect(benchmarkFixture.phase1.length).toBe(20)
   })
 })
