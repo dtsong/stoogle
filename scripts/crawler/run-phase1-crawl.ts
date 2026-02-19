@@ -58,11 +58,31 @@ function parsePositiveIntegerEnv(name: string, fallback: number): number {
   return value
 }
 
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`${label} timed out after ${timeoutMs}ms`))
+        }, timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+  }
+}
+
 async function main() {
   loadEnvLocal()
 
   const pageCap = parsePositiveIntegerEnv('PHASE1_CRAWL_PAGE_CAP', 10)
   const concurrency = parsePositiveIntegerEnv('PHASE1_CRAWL_CONCURRENCY', 5)
+  const siteTimeoutMs = parsePositiveIntegerEnv('PHASE1_CRAWL_SITE_TIMEOUT_MS', 180000)
   const client = createAdminClient()
 
   const phase1SeedUrls = PHASE1_SEED_DATA.sites.map((site) => site.url)
@@ -99,7 +119,9 @@ async function main() {
   const startedAtMs = Date.now()
   let completed = 0
 
-  console.log(`Starting crawl for ${sites.length} sites (concurrency=${concurrency}, pageCap=${pageCap})`)
+  console.log(
+    `Starting crawl for ${sites.length} sites (concurrency=${concurrency}, pageCap=${pageCap}, siteTimeoutMs=${siteTimeoutMs})`
+  )
   renderProgress(0, sites.length, startedAtMs)
 
   for (let index = 0; index < sites.length; index += concurrency) {
@@ -107,7 +129,11 @@ async function main() {
     const chunkResults = await Promise.all(
       chunk.map(async (site) => {
         try {
-          const result = await runCrawlForSite(site.id, 'phase1-seed-crawl', { pageCap })
+          const result = await withTimeout(
+            runCrawlForSite(site.id, 'phase1-seed-crawl', { pageCap }),
+            siteTimeoutMs,
+            `Crawl for ${site.url}`
+          )
           return {
             siteId: site.id,
             siteUrl: site.url,
@@ -138,12 +164,13 @@ async function main() {
 
   console.log(
     JSON.stringify(
-      {
-        pageCap,
-        concurrency,
-        totalSites: sites.length,
-        failedSites: results.filter((result) => result.failed).length,
-        results,
+        {
+          pageCap,
+          concurrency,
+          siteTimeoutMs,
+          totalSites: sites.length,
+          failedSites: results.filter((result) => result.failed).length,
+          results,
       },
       null,
       2

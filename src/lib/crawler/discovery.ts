@@ -2,6 +2,7 @@ import { normalizeUrl } from '@/lib/crawler/url-normalization'
 
 export const STOOGLE_USER_AGENT = 'Stoogle/1.0 (curated scripture search)'
 const REQUEST_INTERVAL_MS = 2000
+export const REQUEST_TIMEOUT_MS = 15_000
 const DEFAULT_PAGE_CAP = 500
 const NON_HTML_EXTENSIONS = [
   '.pdf',
@@ -139,6 +140,7 @@ async function requestText(
     headers: {
       'User-Agent': STOOGLE_USER_AGENT,
     },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
 
   return {

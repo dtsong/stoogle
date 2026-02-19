@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio'
-import { STOOGLE_USER_AGENT } from '@/lib/crawler/discovery'
+import { STOOGLE_USER_AGENT, REQUEST_TIMEOUT_MS } from '@/lib/crawler/discovery'
 
 type FetchLike = typeof fetch
 
@@ -65,6 +65,7 @@ export async function fetchAndExtractPage(
       headers: {
         'User-Agent': STOOGLE_USER_AGENT,
       },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
 
     if (!response.ok) {
