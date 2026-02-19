@@ -91,4 +91,26 @@ describe('Search page', () => {
     expect(screen.getByText('Site: Example Site x')).toBeTruthy()
     expect(screen.getByText('Category: apologetics x')).toBeTruthy()
   })
+
+  it('keeps validation errors as inline messaging (not outage panel)', async () => {
+    executeSearchActionMock.mockResolvedValueOnce({
+      ok: false,
+      error: 'Please enter a search query.',
+      data: {
+        query: '',
+        page: 1,
+        limit: 10,
+        found: 0,
+        facets: { siteNames: [], categorySlugs: [] },
+        results: [],
+      },
+    })
+
+    const component = await SearchPage({ searchParams: Promise.resolve({ query: '' }) })
+    render(component)
+
+    expect(screen.getByText('Please enter a search query.')).toBeTruthy()
+    expect(screen.queryByText('Search is temporarily unavailable. Please try again.')).toBeNull()
+    expect(screen.queryByRole('link', { name: /retry search/i })).toBeNull()
+  })
 })

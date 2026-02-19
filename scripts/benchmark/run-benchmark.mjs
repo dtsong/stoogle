@@ -130,6 +130,7 @@ async function main() {
   console.log(JSON.stringify(summary, null, 2))
 
   if (relevanceOutputPath) {
+    fs.mkdirSync(path.dirname(relevanceOutputPath), { recursive: true })
     fs.writeFileSync(relevanceOutputPath, `${JSON.stringify(summary, null, 2)}\n`)
   }
 

@@ -83,6 +83,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const hasPreviousPage = page > 1
   const hasNextPage = page < totalPages
   const retryHref = buildRetryHref(query, page, selectedSiteNames, selectedCategorySlugs)
+  const isServiceError = searchResult.error === 'Search is temporarily unavailable. Please try again.'
 
   return (
     <main className="min-h-screen bg-background px-6 py-8 text-foreground sm:px-10">
@@ -126,17 +127,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           />
         ) : null}
 
-        {searchResult.error ? (
+        {isServiceError ? (
           <SearchErrorState retryHref={retryHref} />
-        ) : searchResult.data.results.length === 0 ? (
+        ) : searchResult.error ? null : (
           <SearchEmptyState />
-        ) : (
+        )}
+        {searchResult.data.results.length > 0 ? (
           <div className="grid gap-4">
             {searchResult.data.results.map((result) => (
               <ResultCard key={result.id} result={result} query={query} />
             ))}
           </div>
-        )}
+        ) : null}
 
         <div className="flex items-center justify-between pt-2">
           <Button variant="outline" disabled={!hasPreviousPage} asChild>

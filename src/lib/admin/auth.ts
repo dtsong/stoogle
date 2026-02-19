@@ -23,7 +23,7 @@ function allowedAdminEmails(): string[] {
 
 function isEmailAllowlisted(email: string): boolean {
   const allowlist = allowedAdminEmails()
-  if (allowlist.length === 0) return true
+  if (allowlist.length === 0) return false
   return allowlist.includes(email.toLowerCase())
 }
 
