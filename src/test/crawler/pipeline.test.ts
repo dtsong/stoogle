@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { CrawlPageRecord, CrawlRepository, CrawlSite, SearchIndex } from '@/lib/crawler/pipeline'
 import { runSiteCrawl } from '@/lib/crawler/pipeline'
+import type { CrawlEvent } from '@/lib/crawler/events'
 
 class InMemoryRepository implements CrawlRepository {
   sites = new Map<string, CrawlSite>()
@@ -284,5 +285,158 @@ describe('runSiteCrawl', () => {
     )
 
     expect(index.removalsById).toEqual(['site-3:https://example.com/deleted'])
+  })
+
+  it('emits full event sequence during successful crawl', async () => {
+    const repository = new InMemoryRepository()
+    const index = new InMemoryIndex()
+    const events: CrawlEvent[] = []
+
+    repository.sites.set('site-ev', {
+      id: 'site-ev',
+      url: 'https://example.com',
+      name: 'Events Test',
+      isActive: true,
+      categorySlugs: ['general'],
+    })
+
+    const discover = vi.fn().mockResolvedValue({
+      urls: ['https://example.com/a'],
+      usedSitemap: true,
+      usedBfs: false,
+    })
+
+    const extract = vi.fn().mockResolvedValue({
+      title: 'A',
+      content: 'Content A',
+      noindex: false,
+      nosnippet: false,
+    })
+
+    let time = 0
+    await runSiteCrawl(
+      { siteId: 'site-ev', triggeredBy: 'test' },
+      {
+        repository,
+        index,
+        discover,
+        extract,
+        now: () => new Date('2026-02-18T12:00:00.000Z'),
+        onEvent: (event) => events.push(event),
+        perfNow: () => time++,
+      }
+    )
+
+    const types = events.map((e) => e.type)
+    expect(types).toEqual([
+      'site-start',
+      'discovery-complete',
+      'page-processed',
+      'page-indexed',
+      'site-complete',
+    ])
+
+    const siteStart = events[0]
+    expect(siteStart.type === 'site-start' && siteStart.name).toBe('Events Test')
+
+    const discoveryComplete = events[1]
+    expect(discoveryComplete.type === 'discovery-complete' && discoveryComplete.urlCount).toBe(1)
+  })
+
+  it('emits page-skipped with correct reasons', async () => {
+    const repository = new InMemoryRepository()
+    const index = new InMemoryIndex()
+    const events: CrawlEvent[] = []
+
+    repository.sites.set('site-skip', {
+      id: 'site-skip',
+      url: 'https://example.com',
+      name: 'Skip Test',
+      isActive: true,
+      categorySlugs: [],
+    })
+
+    const discover = vi.fn().mockResolvedValue({
+      urls: ['https://example.com/null', 'https://example.com/noindex'],
+      usedSitemap: true,
+      usedBfs: false,
+    })
+
+    const extract = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        title: 'Noindex',
+        content: 'Skip',
+        noindex: true,
+        nosnippet: false,
+      })
+
+    await runSiteCrawl(
+      { siteId: 'site-skip' },
+      {
+        repository,
+        index,
+        discover,
+        extract,
+        onEvent: (event) => events.push(event),
+        perfNow: () => 0,
+      }
+    )
+
+    const skipped = events.filter((e) => e.type === 'page-skipped')
+    expect(skipped).toHaveLength(2)
+    expect(skipped[0].type === 'page-skipped' && skipped[0].reason).toBe('extraction-null')
+    expect(skipped[1].type === 'page-skipped' && skipped[1].reason).toBe('noindex')
+  })
+
+  it('fails crawl when signal is aborted mid-crawl', async () => {
+    const repository = new InMemoryRepository()
+    const index = new InMemoryIndex()
+    const controller = new AbortController()
+
+    repository.sites.set('site-abort', {
+      id: 'site-abort',
+      url: 'https://example.com',
+      name: 'Abort Test',
+      isActive: true,
+      categorySlugs: [],
+    })
+
+    const discover = vi.fn().mockResolvedValue({
+      urls: ['https://example.com/a', 'https://example.com/b', 'https://example.com/c'],
+      usedSitemap: true,
+      usedBfs: false,
+    })
+
+    let extractCalls = 0
+    const extract = vi.fn().mockImplementation(async () => {
+      extractCalls += 1
+      if (extractCalls === 1) {
+        // Abort after first extraction
+        controller.abort()
+      }
+      return {
+        title: 'Page',
+        content: 'Content',
+        noindex: false,
+        nosnippet: false,
+      }
+    })
+
+    await expect(
+      runSiteCrawl(
+        { siteId: 'site-abort', signal: controller.signal },
+        {
+          repository,
+          index,
+          discover,
+          extract,
+        }
+      )
+    ).rejects.toThrow('Crawl aborted during page processing')
+
+    // Aborted crawl should be marked as failed, not completed
+    expect(repository.crawlJobs.get('job-site-abort')?.status).toBe('failed')
   })
 })

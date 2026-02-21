@@ -59,9 +59,14 @@ async function main() {
   const seed = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'supabase/seeds/phase1.seed.json'), 'utf8'))
   const expectedDomains = seed.sites.map((site) => new URL(site.url).hostname.toLowerCase())
 
-  const [{ count: activeSiteCount }, { data: jobs }] = await Promise.all([
+  const [{ count: activeSiteCount }, { data: jobs }, { data: sites }] = await Promise.all([
     supabase.from('sites').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('crawl_queue').select('site_id,status,url').limit(500),
+    supabase
+      .from('crawl_queue')
+      .select('site_id,status,url,error,updated_at,attempted_at')
+      .order('updated_at', { ascending: false })
+      .limit(500),
+    supabase.from('sites').select('id,url,name').eq('is_active', true).limit(200),
   ])
 
   const facetResult = await typesense.collections('pages').documents().search({
@@ -78,12 +83,54 @@ async function main() {
   const completedJobs = (jobs ?? []).filter((job) => job.status === 'completed').length
   const missingIndexedDomains = expectedDomains.filter((domain) => !indexedDomains.has(domain))
 
+  const siteByDomain = new Map(
+    (sites ?? []).map((site) => [new URL(site.url).hostname.toLowerCase(), site])
+  )
+
+  const latestJobBySiteId = new Map()
+  for (const job of jobs ?? []) {
+    if (!latestJobBySiteId.has(job.site_id)) {
+      latestJobBySiteId.set(job.site_id, job)
+    }
+  }
+
+  const missingDomainDiagnostics = await Promise.all(
+    missingIndexedDomains.map(async (domain) => {
+      const site = siteByDomain.get(domain)
+      const latestJob = site ? latestJobBySiteId.get(site.id) : null
+
+      let crawlPageCount = 0
+      if (site) {
+        const { count } = await supabase
+          .from('crawl_pages')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', site.id)
+          .is('deleted_at', null)
+
+        crawlPageCount = count ?? 0
+      }
+
+      return {
+        domain,
+        siteId: site?.id ?? null,
+        siteName: site?.name ?? null,
+        siteUrl: site?.url ?? null,
+        crawlPageCount,
+        latestJobStatus: latestJob?.status ?? null,
+        latestJobError: latestJob?.error ?? null,
+        latestJobUpdatedAt: latestJob?.updated_at ?? null,
+        latestJobAttemptedAt: latestJob?.attempted_at ?? null,
+      }
+    })
+  )
+
   const summary = {
     activeSiteCount,
     expectedSiteCount: expectedDomains.length,
     completedJobs,
     indexedDomainCount: indexedDomains.size,
     missingIndexedDomains,
+    missingDomainDiagnostics,
     totalDocuments: facetResult.found,
   }
 

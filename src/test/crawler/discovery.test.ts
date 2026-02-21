@@ -173,6 +173,84 @@ describe('discoverPages', () => {
     ])
   })
 
+  it('uses open robots policy when robots.txt fetch times out', async () => {
+    const timeoutError = new DOMException('The operation timed out.', 'TimeoutError')
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.includes('robots.txt')) throw timeoutError
+      if (url.includes('sitemap.xml')) {
+        return response('<urlset><url><loc>https://example.com/page</loc></url></urlset>', {
+          contentType: 'application/xml',
+        })
+      }
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn: async () => {},
+      nowFn: () => 0,
+      pageCap: 5,
+    })
+
+    expect(result.urls).toContain('https://example.com/page')
+  })
+
+  it('skips timed-out sitemaps and falls back to BFS', async () => {
+    const timeoutError = new DOMException('The operation timed out.', 'TimeoutError')
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.includes('robots.txt')) return response('User-agent: *')
+      if (url.includes('sitemap.xml')) throw timeoutError
+      if (url === 'https://example.com/') {
+        return response('<html><body><a href="/a">A</a></body></html>')
+      }
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn: async () => {},
+      nowFn: () => 0,
+      pageCap: 5,
+    })
+
+    expect(result.usedSitemap).toBe(false)
+    expect(result.usedBfs).toBe(true)
+    expect(result.urls).toContain('https://example.com/')
+  })
+
+  it('skips timed-out pages during BFS and continues discovery', async () => {
+    const timeoutError = new DOMException('The operation timed out.', 'TimeoutError')
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.includes('robots.txt')) return response('User-agent: *')
+      if (url.includes('sitemap.xml')) return response('', { status: 404 })
+      if (url === 'https://example.com/') {
+        return response('<html><body><a href="/slow">slow</a><a href="/fast">fast</a></body></html>')
+      }
+      if (url === 'https://example.com/slow') throw timeoutError
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn: async () => {},
+      nowFn: () => 0,
+      pageCap: 10,
+    })
+
+    expect(result.urls).toContain('https://example.com/')
+    expect(result.urls).toContain('https://example.com/fast')
+    expect(result.urls).not.toContain('https://example.com/slow')
+  })
+
   it('rejects crawl targets not in allowed domains', async () => {
     await expect(
       discoverPages({
@@ -180,5 +258,135 @@ describe('discoverPages', () => {
         allowedDomains: ['another.com'],
       })
     ).rejects.toThrow("is not in allowedDomains")
+  })
+
+  it('retries once on 5xx then returns the response', async () => {
+    let attempt = 0
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.includes('robots.txt')) return response('User-agent: *')
+      if (url.includes('sitemap.xml')) {
+        attempt += 1
+        if (attempt === 1) return response('', { status: 503 })
+        return response(
+          '<urlset><url><loc>https://example.com/page</loc></url></urlset>',
+          { contentType: 'application/xml' }
+        )
+      }
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn: async () => {},
+      nowFn: () => 0,
+      pageCap: 5,
+    })
+
+    expect(result.urls).toContain('https://example.com/page')
+    expect(attempt).toBe(2)
+  })
+
+  it('retries once on timeout then throws (caught by caller)', async () => {
+    let fetchAttempts = 0
+    const timeoutError = new DOMException('The operation timed out.', 'TimeoutError')
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.includes('robots.txt')) return response('User-agent: *')
+      if (url.includes('sitemap.xml')) {
+        fetchAttempts += 1
+        throw timeoutError
+      }
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn: async () => {},
+      nowFn: () => 0,
+      pageCap: 5,
+    })
+
+    // Sitemap timed out twice (original + retry), fell back to BFS
+    expect(fetchAttempts).toBe(2)
+    expect(result.usedSitemap).toBe(false)
+  })
+
+  it('stops BFS loop when signal is aborted', async () => {
+    const controller = new AbortController()
+
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+
+      if (url.includes('robots.txt')) return response('User-agent: *')
+      if (url.includes('sitemap.xml')) return response('', { status: 404 })
+
+      if (url === 'https://example.com/') {
+        // Abort after the first page is fetched
+        controller.abort()
+        return response(
+          '<html><body><a href="/a">A</a><a href="/b">B</a><a href="/c">C</a></body></html>'
+        )
+      }
+
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn: async () => {},
+      nowFn: () => 0,
+      pageCap: 100,
+      signal: controller.signal,
+    })
+
+    // Should have stopped after the root page — not fetched /a, /b, /c
+    expect(result.urls).toEqual(['https://example.com/'])
+  })
+
+  it('handles 429 with Retry-After header', async () => {
+    let attempt = 0
+    const sleepFn = vi.fn(async () => {})
+
+    const fetchImpl = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.includes('robots.txt')) return response('User-agent: *')
+      if (url.includes('sitemap.xml')) {
+        attempt += 1
+        if (attempt === 1) {
+          return new Response('', {
+            status: 429,
+            headers: {
+              'content-type': 'text/plain',
+              'retry-after': '2',
+            },
+          })
+        }
+        return response(
+          '<urlset><url><loc>https://example.com/page</loc></url></urlset>',
+          { contentType: 'application/xml' }
+        )
+      }
+      return response('<html><body>ok</body></html>')
+    })
+
+    const result = await discoverPages({
+      siteUrl: 'https://example.com',
+      allowedDomains: ['example.com'],
+      fetchImpl,
+      sleepFn,
+      nowFn: () => 0,
+      pageCap: 5,
+    })
+
+    expect(result.urls).toContain('https://example.com/page')
+    // sleepFn should have been called with 2000ms (Retry-After: 2)
+    expect(sleepFn).toHaveBeenCalledWith(2000)
   })
 })

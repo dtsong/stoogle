@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio'
-import { STOOGLE_USER_AGENT } from '@/lib/crawler/discovery'
+import { STOOGLE_USER_AGENT, REQUEST_TIMEOUT_MS } from '@/lib/crawler/discovery'
+import { composeSignals } from '@/lib/crawler/abort-utils'
 
 type FetchLike = typeof fetch
 
@@ -56,29 +57,59 @@ export function extractFromHtml(html: string): ExtractedPage {
   }
 }
 
+function isRetryableStatus(status: number): boolean {
+  return status >= 500 || status === 429
+}
+
 export async function fetchAndExtractPage(
   pageUrl: string,
-  fetchImpl: FetchLike = fetch
+  fetchImpl: FetchLike = fetch,
+  signal?: AbortSignal
 ): Promise<ExtractedPage | null> {
-  try {
-    const response = await fetchImpl(pageUrl, {
-      headers: {
-        'User-Agent': STOOGLE_USER_AGENT,
-      },
-    })
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const composedSignal = composeSignals(signal, REQUEST_TIMEOUT_MS)
+    try {
+      const response = await fetchImpl(pageUrl, {
+        headers: { 'User-Agent': STOOGLE_USER_AGENT },
+        signal: composedSignal,
+      })
 
-    if (!response.ok) {
+      if (attempt === 0 && isRetryableStatus(response.status) && !signal?.aborted) {
+        const retryAfter = response.headers.get('retry-after')
+        const delayMs =
+          response.status === 429
+            ? (Number.isFinite(Number(retryAfter)) && Number(retryAfter) > 0
+                ? Number(retryAfter) * 1000
+                : 4000)
+            : 1000
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+        continue
+      }
+
+      if (!response.ok) return null
+
+      const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
+      if (!contentType.includes('text/html')) return null
+
+      const html = await response.text()
+      return extractFromHtml(html)
+    } catch (error) {
+      if (attempt === 0 && !signal?.aborted) {
+        const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
+        if (isTimeout) {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          continue
+        }
+      }
+
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        console.warn(`[extraction] Fetch timed out after ${REQUEST_TIMEOUT_MS}ms: ${pageUrl}`)
+      } else {
+        console.warn(`[extraction] Fetch failed for ${pageUrl}:`, error)
+      }
       return null
     }
-
-    const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
-    if (!contentType.includes('text/html')) {
-      return null
-    }
-
-    const html = await response.text()
-    return extractFromHtml(html)
-  } catch {
-    return null
   }
+
+  return null
 }

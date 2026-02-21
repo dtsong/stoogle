@@ -1,7 +1,9 @@
 import { normalizeUrl } from '@/lib/crawler/url-normalization'
+import { composeSignals } from '@/lib/crawler/abort-utils'
 
 export const STOOGLE_USER_AGENT = 'Stoogle/1.0 (curated scripture search)'
 const REQUEST_INTERVAL_MS = 2000
+export const REQUEST_TIMEOUT_MS = 15_000
 const DEFAULT_PAGE_CAP = 500
 const NON_HTML_EXTENSIONS = [
   '.pdf',
@@ -30,6 +32,7 @@ export type DiscoverPagesOptions = {
   siteUrl: string
   allowedDomains: string[]
   pageCap?: number
+  signal?: AbortSignal
   fetchImpl?: FetchLike
   sleepFn?: SleepFn
   nowFn?: NowFn
@@ -127,39 +130,83 @@ function extractHrefLinks(html: string): string[] {
   return hrefMatches.map((match) => match[1]).filter(Boolean)
 }
 
+function isRetryable(error: unknown, status?: number): boolean {
+  if (error instanceof DOMException && error.name === 'TimeoutError') return true
+  if (status !== undefined && status >= 500) return true
+  if (status === 429) return true
+  return false
+}
+
+function getRetryDelayMs(status?: number, retryAfterHeader?: string | null): number {
+  if (status === 429) {
+    const retryAfter = Number(retryAfterHeader)
+    return Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 4000
+  }
+  return 1000
+}
+
 async function requestText(
   url: string,
   fetchImpl: FetchLike,
-  rateLimiter: DomainRateLimiter
+  rateLimiter: DomainRateLimiter,
+  signal?: AbortSignal,
+  sleepFn: SleepFn = defaultSleep
 ): Promise<{ ok: boolean; status: number; text: string; contentType: string }> {
   const domain = new URL(url).hostname.toLowerCase()
-  await rateLimiter.wait(domain)
 
-  const response = await fetchImpl(url, {
-    headers: {
-      'User-Agent': STOOGLE_USER_AGENT,
-    },
-  })
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const composedSignal = composeSignals(signal, REQUEST_TIMEOUT_MS)
+    await rateLimiter.wait(domain)
 
-  return {
-    ok: response.ok,
-    status: response.status,
-    text: await response.text(),
-    contentType: response.headers.get('content-type')?.toLowerCase() ?? '',
+    let response: Response
+    try {
+      response = await fetchImpl(url, {
+        headers: { 'User-Agent': STOOGLE_USER_AGENT },
+        signal: composedSignal,
+      })
+    } catch (error) {
+      if (attempt === 0 && isRetryable(error) && !signal?.aborted) {
+        await sleepFn(1000)
+        continue
+      }
+      throw error
+    }
+
+    if (attempt === 0 && isRetryable(undefined, response.status) && !signal?.aborted) {
+      const retryAfter = response.headers.get('retry-after')
+      await sleepFn(getRetryDelayMs(response.status, retryAfter))
+      continue
+    }
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      text: await response.text(),
+      contentType: response.headers.get('content-type')?.toLowerCase() ?? '',
+    }
   }
+
+  throw new Error(`requestText: unreachable`)
 }
 
 async function loadRobotsPolicy(
   origin: string,
   fetchImpl: FetchLike,
-  rateLimiter: DomainRateLimiter
+  rateLimiter: DomainRateLimiter,
+  signal?: AbortSignal,
+  sleepFn?: SleepFn
 ): Promise<RobotsPolicy> {
   try {
     const robotsUrl = `${origin}/robots.txt`
-    const response = await requestText(robotsUrl, fetchImpl, rateLimiter)
+    const response = await requestText(robotsUrl, fetchImpl, rateLimiter, signal, sleepFn)
     if (!response.ok) return { disallow: [] }
     return parseRobots(response.text)
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      console.warn(`[discovery] robots.txt timed out for ${origin} — proceeding with open policy`)
+    } else {
+      console.warn(`[discovery] Failed to fetch robots.txt for ${origin}:`, error)
+    }
     return { disallow: [] }
   }
 }
@@ -170,19 +217,31 @@ async function discoverFromSitemaps(
   robots: RobotsPolicy,
   fetchImpl: FetchLike,
   rateLimiter: DomainRateLimiter,
-  pageCap: number
+  pageCap: number,
+  signal?: AbortSignal,
+  sleepFn?: SleepFn
 ): Promise<string[]> {
   const queue = [sitemapUrl]
   const seenSitemaps = new Set<string>()
   const discovered: string[] = []
   const seenPages = new Set<string>()
 
-  while (queue.length > 0 && discovered.length < pageCap) {
+  while (queue.length > 0 && discovered.length < pageCap && !signal?.aborted) {
     const currentSitemap = queue.shift()
     if (!currentSitemap || seenSitemaps.has(currentSitemap)) continue
     seenSitemaps.add(currentSitemap)
 
-    const response = await requestText(currentSitemap, fetchImpl, rateLimiter)
+    let response
+    try {
+      response = await requestText(currentSitemap, fetchImpl, rateLimiter, signal, sleepFn)
+    } catch (error) {
+      const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
+      console.warn(
+        `[discovery] ${isTimeout ? `Timed out fetching sitemap (exceeded ${REQUEST_TIMEOUT_MS}ms)` : 'Failed to fetch sitemap'}: ${currentSitemap}`,
+        isTimeout ? undefined : error
+      )
+      continue
+    }
     if (!response.ok) continue
 
     const locs = parseLocTags(response.text)
@@ -221,7 +280,9 @@ async function discoverViaBfs(
   seedUrls: string[],
   fetchImpl: FetchLike,
   rateLimiter: DomainRateLimiter,
-  pageCap: number
+  pageCap: number,
+  signal?: AbortSignal,
+  sleepFn?: SleepFn
 ): Promise<string[]> {
   const queue = [startUrl]
   const queued = new Set(queue)
@@ -229,7 +290,7 @@ async function discoverViaBfs(
   const discovered = [...seedUrls]
   const discoveredSet = new Set(seedUrls)
 
-  while (queue.length > 0 && discovered.length < pageCap) {
+  while (queue.length > 0 && discovered.length < pageCap && !signal?.aborted) {
     const current = queue.shift()
     if (!current || visited.has(current)) continue
     visited.add(current)
@@ -238,7 +299,17 @@ async function discoverViaBfs(
     if (isNonHtmlResource(current)) continue
     if (isBlockedByRobots(current, robots)) continue
 
-    const response = await requestText(current, fetchImpl, rateLimiter)
+    let response
+    try {
+      response = await requestText(current, fetchImpl, rateLimiter, signal, sleepFn)
+    } catch (error) {
+      const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
+      console.warn(
+        `[discovery] ${isTimeout ? `Timed out fetching page (exceeded ${REQUEST_TIMEOUT_MS}ms)` : 'Failed to fetch page'}: ${current}`,
+        isTimeout ? undefined : error
+      )
+      continue
+    }
     if (!response.ok || !response.contentType.includes('text/html')) continue
 
     if (!discoveredSet.has(current)) {
@@ -270,6 +341,7 @@ export async function discoverPages(options: DiscoverPagesOptions): Promise<Disc
   const sleepFn = options.sleepFn ?? defaultSleep
   const nowFn = options.nowFn ?? Date.now
   const pageCap = options.pageCap ?? DEFAULT_PAGE_CAP
+  const signal = options.signal
   const allowedDomains = toAllowedDomainSet(options.allowedDomains)
   const normalizedSiteUrl = normalizeUrl(options.siteUrl)
 
@@ -284,7 +356,7 @@ export async function discoverPages(options: DiscoverPagesOptions): Promise<Disc
 
   const rateLimiter = new DomainRateLimiter(sleepFn, nowFn)
   const origin = new URL(normalizedSiteUrl).origin
-  const robots = await loadRobotsPolicy(origin, fetchImpl, rateLimiter)
+  const robots = await loadRobotsPolicy(origin, fetchImpl, rateLimiter, signal, sleepFn)
 
   const sitemapUrls = await discoverFromSitemaps(
     `${origin}/sitemap.xml`,
@@ -292,7 +364,9 @@ export async function discoverPages(options: DiscoverPagesOptions): Promise<Disc
     robots,
     fetchImpl,
     rateLimiter,
-    pageCap
+    pageCap,
+    signal,
+    sleepFn
   )
 
   const bfsUrls =
@@ -304,7 +378,9 @@ export async function discoverPages(options: DiscoverPagesOptions): Promise<Disc
           sitemapUrls,
           fetchImpl,
           rateLimiter,
-          pageCap
+          pageCap,
+          signal,
+          sleepFn
         )
       : sitemapUrls
 

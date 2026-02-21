@@ -53,4 +53,45 @@ describe('fetchAndExtractPage', () => {
     const extracted = await fetchAndExtractPage('https://example.com/missing')
     expect(extracted).toBeNull()
   })
+
+  it('returns null when fetch is aborted by timeout', async () => {
+    const timeoutError = new DOMException('The operation timed out.', 'TimeoutError')
+    const fetchImpl = async () => {
+      throw timeoutError
+    }
+
+    const extracted = await fetchAndExtractPage('https://example.com/slow', fetchImpl)
+    expect(extracted).toBeNull()
+  })
+
+  it('retries once on 5xx then returns null on second failure', async () => {
+    let attempts = 0
+    server.use(
+      http.get('https://example.com/flaky', () => {
+        attempts += 1
+        return new HttpResponse(null, { status: 502 })
+      })
+    )
+
+    const extracted = await fetchAndExtractPage('https://example.com/flaky')
+    expect(extracted).toBeNull()
+    expect(attempts).toBe(2)
+  })
+
+  it('returns null when parent signal is already aborted', async () => {
+    server.use(
+      http.get('https://example.com/page', () =>
+        HttpResponse.text('<html><body>Hello</body></html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html' },
+        })
+      )
+    )
+
+    const controller = new AbortController()
+    controller.abort()
+
+    const extracted = await fetchAndExtractPage('https://example.com/page', fetch, controller.signal)
+    expect(extracted).toBeNull()
+  })
 })

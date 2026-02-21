@@ -74,9 +74,10 @@ describe('executeSearchAction', () => {
     expect(insert).not.toHaveBeenCalled()
   })
 
-  it('returns user-friendly error when log insert fails', async () => {
+  it('returns successful results even when log insert fails', async () => {
     const search = vi.fn().mockResolvedValue(createResponse('query', 1))
     const insert = vi.fn().mockResolvedValue({ error: { message: 'db unavailable' } })
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const result = await executeSearchAction(
       { query: 'query' },
@@ -86,8 +87,14 @@ describe('executeSearchAction', () => {
       }
     )
 
-    expect(result.ok).toBe(false)
-    expect(result.error).toBe('Search is temporarily unavailable. Please try again.')
+    expect(result.ok).toBe(true)
+    expect(result.error).toBeNull()
+    expect(result.data.found).toBe(1)
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[search-action] Failed to write search log:',
+      'db unavailable'
+    )
+    consoleSpy.mockRestore()
   })
 
   it('rejects blank query with validation error', async () => {

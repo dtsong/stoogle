@@ -64,21 +64,25 @@ function parseFacetCounts(result: TypesenseSearchResult): SearchResponse['facets
   return facets
 }
 
+function escapeFilterValue(value: string): string {
+  return `"${value.replace(/"/g, '')}"`
+}
+
 function toFilterBy(options: SearchOptions): string | undefined {
   const filters: string[] = []
 
   if (options.siteNames && options.siteNames.length > 0) {
-    const names = options.siteNames.map((name) => `"${name}"`).join(',')
+    const names = options.siteNames.map(escapeFilterValue).join(',')
     filters.push(`site_name:[${names}]`)
   }
 
   if (options.siteDomains && options.siteDomains.length > 0) {
-    const domains = options.siteDomains.map((domain) => `\"${domain}\"`).join(',')
+    const domains = options.siteDomains.map(escapeFilterValue).join(',')
     filters.push(`site_domain:[${domains}]`)
   }
 
   if (options.categorySlugs && options.categorySlugs.length > 0) {
-    const categories = options.categorySlugs.map((slug) => `\"${slug}\"`).join(',')
+    const categories = options.categorySlugs.map(escapeFilterValue).join(',')
     filters.push(`category_slugs:[${categories}]`)
   }
 

@@ -1,0 +1,363 @@
+{
+  "phase": "phase1",
+  "total": 20,
+  "passed": 10,
+  "zeroResults": 0,
+  "p95LatencyMs": 68,
+  "results": [
+    {
+      "query": "what is apologetics",
+      "expectedTopDomains": [
+        "carm.org",
+        "str.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "triablogue.blogspot.com",
+        "aomin.org",
+        "monergism.com",
+        "reasonablefaith.org",
+        "answersingenesis.org",
+        "answersingenesis.org",
+        "str.org",
+        "str.org",
+        "str.org",
+        "answersingenesis.org"
+      ],
+      "found": 15,
+      "latencyMs": 395,
+      "pass": true
+    },
+    {
+      "query": "resurrection evidence",
+      "expectedTopDomains": [
+        "reasonablefaith.org",
+        "coldcasechristianity.com"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "founders.org",
+        "monergism.com",
+        "desiringgod.org",
+        "answersingenesis.org",
+        "answersingenesis.org",
+        "ccef.org",
+        "carm.org"
+      ],
+      "found": 7,
+      "latencyMs": 50,
+      "pass": false
+    },
+    {
+      "query": "biblical counseling anger",
+      "expectedTopDomains": [
+        "ccef.org",
+        "biblicalcounseling.com"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "biblicalcounseling.com",
+        "founders.org"
+      ],
+      "found": 2,
+      "latencyMs": 58,
+      "pass": true
+    },
+    {
+      "query": "conflict resolution bible",
+      "expectedTopDomains": [
+        "peacemaker.net",
+        "ibcd.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "biblicalcounseling.com",
+        "biblicalcounseling.com",
+        "challies.com"
+      ],
+      "found": 3,
+      "latencyMs": 55,
+      "pass": false
+    },
+    {
+      "query": "young earth creation",
+      "expectedTopDomains": [
+        "answersingenesis.org",
+        "creation.com"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "icr.org",
+        "monergism.com"
+      ],
+      "found": 2,
+      "latencyMs": 41,
+      "pass": false
+    },
+    {
+      "query": "fossil record flood",
+      "expectedTopDomains": [
+        "icr.org",
+        "answersingenesis.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "icr.org",
+        "icr.org"
+      ],
+      "found": 2,
+      "latencyMs": 34,
+      "pass": true
+    },
+    {
+      "query": "john macarthur sermons",
+      "expectedTopDomains": [
+        "gty.org",
+        "tms.edu"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "triablogue.blogspot.com",
+        "monergism.com",
+        "tms.edu",
+        "tms.edu"
+      ],
+      "found": 4,
+      "latencyMs": 58,
+      "pass": true
+    },
+    {
+      "query": "masters seminary theology",
+      "expectedTopDomains": [
+        "tms.edu",
+        "tmu.edu"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "tms.edu",
+        "tms.edu",
+        "triablogue.blogspot.com",
+        "tms.edu",
+        "sbts.edu"
+      ],
+      "found": 5,
+      "latencyMs": 62,
+      "pass": true
+    },
+    {
+      "query": "albert mohler commentary",
+      "expectedTopDomains": [
+        "albertmohler.com",
+        "sbts.edu"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "triablogue.blogspot.com"
+      ],
+      "found": 1,
+      "latencyMs": 51,
+      "pass": false
+    },
+    {
+      "query": "southern baptist seminary",
+      "expectedTopDomains": [
+        "sbts.edu",
+        "equip.sbts.edu"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "founders.org",
+        "sbts.edu",
+        "triablogue.blogspot.com"
+      ],
+      "found": 3,
+      "latencyMs": 66,
+      "pass": true
+    },
+    {
+      "query": "christian worldview articles",
+      "expectedTopDomains": [
+        "thegospelcoalition.org",
+        "desiringgod.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "aomin.org",
+        "founders.org",
+        "triablogue.blogspot.com",
+        "challies.com",
+        "answersingenesis.org",
+        "answersingenesis.org"
+      ],
+      "found": 6,
+      "latencyMs": 66,
+      "pass": false
+    },
+    {
+      "query": "church membership 9marks",
+      "expectedTopDomains": [
+        "9marks.org",
+        "thegospelcoalition.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "9marks.org"
+      ],
+      "found": 1,
+      "latencyMs": 38,
+      "pass": true
+    },
+    {
+      "query": "reformed theology resources",
+      "expectedTopDomains": [
+        "monergism.com",
+        "ligonier.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "monergism.com",
+        "triablogue.blogspot.com",
+        "aomin.org"
+      ],
+      "found": 3,
+      "latencyMs": 59,
+      "pass": true
+    },
+    {
+      "query": "bible commentary tools",
+      "expectedTopDomains": [
+        "biblehub.com",
+        "blueletterbible.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "biblicalcounseling.com"
+      ],
+      "found": 1,
+      "latencyMs": 43,
+      "pass": false
+    },
+    {
+      "query": "christian questions and answers",
+      "expectedTopDomains": [
+        "gotquestions.org",
+        "christianitytoday.com"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "str.org",
+        "str.org",
+        "str.org",
+        "heartcrymissionary.com",
+        "str.org",
+        "triablogue.blogspot.com",
+        "reasonablefaith.org",
+        "aomin.org",
+        "answersingenesis.org",
+        "desiringgod.org"
+      ],
+      "found": 11,
+      "latencyMs": 68,
+      "pass": false
+    },
+    {
+      "query": "theological education online",
+      "expectedTopDomains": [
+        "thirdmill.org",
+        "logos.com"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "tms.edu",
+        "tms.edu",
+        "founders.org",
+        "triablogue.blogspot.com",
+        "ccef.org"
+      ],
+      "found": 5,
+      "latencyMs": 65,
+      "pass": false
+    },
+    {
+      "query": "daily devotional article",
+      "expectedTopDomains": [
+        "challies.com",
+        "tabletalkmagazine.com"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "banneroftruth.org",
+        "desiringgod.org",
+        "crossway.org",
+        "tabletalkmagazine.com",
+        "desiringgod.org"
+      ],
+      "found": 5,
+      "latencyMs": 49,
+      "pass": true
+    },
+    {
+      "query": "reformed baptist resources",
+      "expectedTopDomains": [
+        "founders.org",
+        "banneroftruth.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "triablogue.blogspot.com",
+        "aomin.org"
+      ],
+      "found": 2,
+      "latencyMs": 52,
+      "pass": false
+    },
+    {
+      "query": "sermon audio archive",
+      "expectedTopDomains": [
+        "sermonaudio.com",
+        "gty.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 0,
+      "resultDomains": [
+        "monergism.com"
+      ],
+      "found": 1,
+      "latencyMs": 47,
+      "pass": false
+    },
+    {
+      "query": "missionary society resources",
+      "expectedTopDomains": [
+        "heartcrymissionary.com",
+        "capitolhillbaptist.org"
+      ],
+      "minMatchCount": 1,
+      "matchedCount": 1,
+      "resultDomains": [
+        "heartcrymissionary.com"
+      ],
+      "found": 1,
+      "latencyMs": 67,
+      "pass": true
+    }
+  ]
+}

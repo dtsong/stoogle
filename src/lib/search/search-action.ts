@@ -1,4 +1,5 @@
 import type { SearchAdapter } from '@/lib/search/adapter'
+import { SearchAdapterError } from '@/lib/search/adapter'
 import type { SearchOptions, SearchResponse } from '@/lib/search/types'
 import { TypesenseAdapter } from '@/lib/search/typesense-adapter'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -87,7 +88,7 @@ export async function executeSearchAction(
     })
 
     if (logError) {
-      throw new Error(`Failed to write search log: ${logError.message}`)
+      console.error('[search-action] Failed to write search log:', logError.message)
     }
 
     return {
@@ -95,7 +96,8 @@ export async function executeSearchAction(
       data: response,
       error: null,
     }
-  } catch {
+  } catch (error) {
+    console.error('[search-action] executeSearchAction failed:', error)
     return {
       ok: false,
       data: emptyResponse(query, input.options),
