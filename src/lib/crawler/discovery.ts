@@ -153,9 +153,9 @@ async function requestText(
   sleepFn: SleepFn = defaultSleep
 ): Promise<{ ok: boolean; status: number; text: string; contentType: string }> {
   const domain = new URL(url).hostname.toLowerCase()
-  const composedSignal = composeSignals(signal, REQUEST_TIMEOUT_MS)
 
   for (let attempt = 0; attempt < 2; attempt++) {
+    const composedSignal = composeSignals(signal, REQUEST_TIMEOUT_MS)
     await rateLimiter.wait(domain)
 
     let response: Response

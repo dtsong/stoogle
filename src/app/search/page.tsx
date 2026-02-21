@@ -129,9 +129,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
         {isServiceError ? (
           <SearchErrorState retryHref={retryHref} />
-        ) : searchResult.error ? null : (
+        ) : !searchResult.error && searchResult.data.results.length === 0 ? (
           <SearchEmptyState />
-        )}
+        ) : null}
         {searchResult.data.results.length > 0 ? (
           <div className="grid gap-4">
             {searchResult.data.results.map((result) => (

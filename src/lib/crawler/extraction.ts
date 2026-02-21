@@ -66,9 +66,8 @@ export async function fetchAndExtractPage(
   fetchImpl: FetchLike = fetch,
   signal?: AbortSignal
 ): Promise<ExtractedPage | null> {
-  const composedSignal = composeSignals(signal, REQUEST_TIMEOUT_MS)
-
   for (let attempt = 0; attempt < 2; attempt++) {
+    const composedSignal = composeSignals(signal, REQUEST_TIMEOUT_MS)
     try {
       const response = await fetchImpl(pageUrl, {
         headers: { 'User-Agent': STOOGLE_USER_AGENT },
