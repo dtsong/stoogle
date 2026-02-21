@@ -1,6 +1,6 @@
-import { Flag } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { SearchResult } from '@/lib/search/types'
+import { ReportDropdown } from '@/components/search/report-dropdown'
 
 export const RESULT_SNIPPET_MAX_LENGTH = 300
 
@@ -52,13 +52,7 @@ export function ResultCard({ result, query }: ResultCardProps) {
         <p className="min-w-0 text-xs text-muted-foreground">
           {result.siteName} - {result.url}
         </p>
-        <button
-          type="button"
-          aria-label="Report result"
-          className="shrink-0 rounded-sm p-1 text-muted-foreground opacity-40 transition-opacity hover:opacity-70"
-        >
-          <Flag className="size-3.5" />
-        </button>
+        <ReportDropdown pageUrl={result.url} />
       </div>
     </article>
   )
