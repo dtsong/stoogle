@@ -44,12 +44,12 @@ export function ResultCard({ result, query }: ResultCardProps) {
 
   return (
     <article className="rounded-xl border border-border bg-card p-5">
-      <a href={result.url} target="_blank" rel="noreferrer" className="text-lg font-semibold text-foreground hover:underline">
+      <a href={result.url} target="_blank" rel="noreferrer" className="line-clamp-2 text-lg font-semibold text-foreground hover:underline">
         {highlightText(result.title, query)}
       </a>
       <p className="mt-2 text-sm text-muted-foreground">{highlightText(snippet, query)}</p>
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="min-w-0 text-xs text-muted-foreground">
+        <p className="min-w-0 truncate text-xs text-muted-foreground">
           {result.siteName} - {result.url}
         </p>
         <button

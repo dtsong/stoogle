@@ -70,7 +70,7 @@ export default function Home() {
             <a
               key={query}
               href={`/search?query=${encodeURIComponent(query)}`}
-              className="rounded-full border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+              className="inline-flex min-h-11 items-center rounded-full border border-border bg-background px-4 py-2 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
             >
               {query}
             </a>
