@@ -38,25 +38,29 @@ describe('Phase 2 Gate: CI/CD pipeline (#31)', () => {
 
 describe('Phase 2 Gate: Health monitoring (#28, #30)', () => {
   it('health endpoint route exists', () => {
-    expect(existsSync('src/app/api/health/search/route.ts')).toBe(false)
-    // Health endpoint is in PR #66 — will exist after merge
-    // Verify the test file documenting expected behavior exists
+    expect(existsSync('src/app/api/health/search/route.ts')).toBe(true)
   })
 })
 
 describe('Phase 2 Gate: Weekly cron crawl (#26)', () => {
   it('vercel.json has cron configuration', () => {
-    // vercel.json is in PR #70 — verify cron pattern when merged
-    // This gate check confirms the PR was raised
+    const vercelConfig = readFileSync('vercel.json', 'utf8')
+    expect(vercelConfig).toContain('/api/cron/crawl')
+  })
+
+  it('cron route handler exists', () => {
+    expect(existsSync('src/app/api/cron/crawl/route.ts')).toBe(true)
   })
 })
 
 describe('Phase 2 Gate: Report flag (#25)', () => {
-  it('report types module exists', () => {
-    // Report feature is in PR #69
-    // Verify the search result card is ready for the report dropdown
+  it('report dropdown is integrated in result card', () => {
     const resultCard = readFileSync('src/components/search/result-card.tsx', 'utf8')
-    expect(resultCard).toContain('Flag')
+    expect(resultCard).toContain('ReportDropdown')
+  })
+
+  it('report types module exists', () => {
+    expect(existsSync('src/lib/report/types.ts')).toBe(true)
   })
 })
 
@@ -77,24 +81,29 @@ describe('Phase 2 Gate: Mobile polish (#32)', () => {
 describe('Phase 2 Gate: Analytics (#37)', () => {
   it('search_logs schema includes click tracking columns', () => {
     const types = readFileSync('src/types/supabase.ts', 'utf8')
-    // Verify types exist (migration adds columns, types reflect them)
-    expect(types).toContain('search_logs')
-    expect(types).toContain('query')
-    expect(types).toContain('result_count')
+    expect(types).toContain('clicked_url')
+    expect(types).toContain('click_position')
+  })
+
+  it('click action module exists', () => {
+    expect(existsSync('src/lib/analytics/click-action.ts')).toBe(true)
+  })
+
+  it('metrics module exists', () => {
+    expect(existsSync('src/lib/analytics/metrics.ts')).toBe(true)
   })
 })
 
 describe('Phase 2 Gate: Sentry error tracking (#29)', () => {
-  it('Sentry config files would exist after PR merge', () => {
-    // Sentry integration is in PR #67
-    // This test documents the expected files:
-    // - sentry.client.config.ts
-    // - sentry.server.config.ts
-    // - sentry.edge.config.ts
-    // - src/instrumentation.ts
-    // - src/lib/sentry.ts
-    // - src/app/global-error.tsx
-    expect(true).toBe(true)
+  it('Sentry config files exist', () => {
+    expect(existsSync('sentry.client.config.ts')).toBe(true)
+    expect(existsSync('sentry.server.config.ts')).toBe(true)
+    expect(existsSync('sentry.edge.config.ts')).toBe(true)
+  })
+
+  it('instrumentation and error boundary exist', () => {
+    expect(existsSync('src/instrumentation.ts')).toBe(true)
+    expect(existsSync('src/app/global-error.tsx')).toBe(true)
   })
 })
 
