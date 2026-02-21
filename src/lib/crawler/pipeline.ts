@@ -182,7 +182,9 @@ export async function runSiteCrawl(
     const totalPages = discovered.urls.length
 
     for (const pageUrl of discovered.urls) {
-      if (input.signal?.aborted) break
+      if (input.signal?.aborted) {
+        throw new Error('Crawl aborted during page processing')
+      }
 
       pagesProcessed += 1
 

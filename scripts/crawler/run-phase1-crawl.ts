@@ -183,6 +183,7 @@ async function main() {
   // Graceful shutdown
   let shuttingDown = false
   let forceShutdown = false
+  let graceTimerId: NodeJS.Timeout | undefined
   const activeControllers = new Map<string, AbortController>()
 
   function handleShutdownSignal() {
@@ -199,7 +200,7 @@ async function main() {
     shuttingDown = true
     console.log('\nGraceful shutdown requested — finishing active sites (30s grace period)...')
     // Don't abort active crawls — let them finish within grace period
-    setTimeout(() => {
+    graceTimerId = setTimeout(() => {
       if (!forceShutdown) {
         console.log('\nGrace period expired — aborting remaining crawls')
         for (const controller of activeControllers.values()) {
@@ -303,7 +304,8 @@ async function main() {
     .in('site_id', allSiteIds)
     .eq('status', 'processing')
 
-  // Remove signal handlers
+  // Clean up shutdown resources
+  if (graceTimerId) clearTimeout(graceTimerId)
   process.removeListener('SIGINT', handleShutdownSignal)
   process.removeListener('SIGTERM', handleShutdownSignal)
 

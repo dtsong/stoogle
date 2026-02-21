@@ -390,7 +390,7 @@ describe('runSiteCrawl', () => {
     expect(skipped[1].type === 'page-skipped' && skipped[1].reason).toBe('noindex')
   })
 
-  it('breaks page loop when signal is aborted mid-crawl', async () => {
+  it('fails crawl when signal is aborted mid-crawl', async () => {
     const repository = new InMemoryRepository()
     const index = new InMemoryIndex()
     const controller = new AbortController()
@@ -424,18 +424,19 @@ describe('runSiteCrawl', () => {
       }
     })
 
-    const result = await runSiteCrawl(
-      { siteId: 'site-abort', signal: controller.signal },
-      {
-        repository,
-        index,
-        discover,
-        extract,
-      }
-    )
+    await expect(
+      runSiteCrawl(
+        { siteId: 'site-abort', signal: controller.signal },
+        {
+          repository,
+          index,
+          discover,
+          extract,
+        }
+      )
+    ).rejects.toThrow('Crawl aborted during page processing')
 
-    // Only the first page should have been processed before abort kicked in
-    expect(result.pagesProcessed).toBe(1)
-    expect(repository.crawlJobs.get('job-site-abort')?.status).toBe('completed')
+    // Aborted crawl should be marked as failed, not completed
+    expect(repository.crawlJobs.get('job-site-abort')?.status).toBe('failed')
   })
 })
