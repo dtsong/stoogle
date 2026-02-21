@@ -190,6 +190,8 @@ export type Database = {
           query: string
           result_count: number
           category_filter: string | null
+          clicked_url: string | null
+          click_position: number | null
           created_at: string
         }
         Insert: {
@@ -197,6 +199,8 @@ export type Database = {
           query: string
           result_count?: number
           category_filter?: string | null
+          clicked_url?: string | null
+          click_position?: number | null
           created_at?: string
         }
         Update: {
@@ -204,6 +208,8 @@ export type Database = {
           query?: string
           result_count?: number
           category_filter?: string | null
+          clicked_url?: string | null
+          click_position?: number | null
           created_at?: string
         }
         Relationships: []
