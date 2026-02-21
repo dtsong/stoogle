@@ -22,6 +22,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.39.0",
     "@supabase/supabase-js": "^2.96.0",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
