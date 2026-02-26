@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { BETA_COOKIE_NAME } from '@/lib/beta'
+import { BETA_COOKIE_NAME, safeCompare } from '@/lib/beta'
 
 const BYPASS_PREFIXES = ['/beta', '/api/', '/admin', '/auth/', '/_next/', '/favicon.ico']
 
@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
   }
 
   const cookie = request.cookies.get(BETA_COOKIE_NAME)?.value
-  if (cookie === code) {
+  if (cookie && safeCompare(cookie, code)) {
     return NextResponse.next()
   }
 

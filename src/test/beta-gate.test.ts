@@ -67,6 +67,7 @@ describe('beta gate middleware', () => {
 describe('beta access action', () => {
   const mockSet = vi.fn()
   const mockRedirect = vi.fn()
+  const mockHeadersGet = vi.fn().mockReturnValue('127.0.0.1')
 
   beforeEach(() => {
     vi.resetModules()
@@ -74,6 +75,7 @@ describe('beta access action', () => {
 
     vi.doMock('next/headers', () => ({
       cookies: vi.fn().mockResolvedValue({ set: mockSet }),
+      headers: vi.fn().mockResolvedValue({ get: mockHeadersGet }),
     }))
 
     vi.doMock('next/navigation', () => ({
@@ -115,7 +117,7 @@ describe('beta access action', () => {
     form.set('code', 'wrong')
 
     await expect(betaAccessAction(form)).rejects.toThrow(
-      'NEXT_REDIRECT:/beta?error=Invalid+access+code'
+      'NEXT_REDIRECT:/beta?error=invalid_code'
     )
     expect(mockSet).not.toHaveBeenCalled()
   })
@@ -128,7 +130,42 @@ describe('beta access action', () => {
     form.set('code', '')
 
     await expect(betaAccessAction(form)).rejects.toThrow(
-      'NEXT_REDIRECT:/beta?error=Invalid+access+code'
+      'NEXT_REDIRECT:/beta?error=invalid_code'
     )
+  })
+})
+
+describe('beta rate limiting', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  it('allows attempts under the limit', async () => {
+    const { isRateLimited, recordAttempt } = await import('@/lib/beta-rate-limit')
+    const now = Date.now()
+    for (let i = 0; i < 4; i++) {
+      recordAttempt('1.2.3.4', now)
+    }
+    expect(isRateLimited('1.2.3.4', now)).toBe(false)
+  })
+
+  it('blocks after 5 failed attempts', async () => {
+    const { isRateLimited, recordAttempt } = await import('@/lib/beta-rate-limit')
+    const now = Date.now()
+    for (let i = 0; i < 5; i++) {
+      recordAttempt('1.2.3.4', now)
+    }
+    expect(isRateLimited('1.2.3.4', now)).toBe(true)
+  })
+
+  it('resets after the window expires', async () => {
+    const { isRateLimited, recordAttempt } = await import('@/lib/beta-rate-limit')
+    const now = Date.now()
+    for (let i = 0; i < 5; i++) {
+      recordAttempt('1.2.3.4', now)
+    }
+    expect(isRateLimited('1.2.3.4', now)).toBe(true)
+    const afterWindow = now + 15 * 60 * 1000
+    expect(isRateLimited('1.2.3.4', afterWindow)).toBe(false)
   })
 })

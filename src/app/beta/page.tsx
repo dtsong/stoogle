@@ -2,13 +2,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { betaAccessAction } from './actions'
 
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_code: 'Invalid access code. Please try again.',
+  rate_limited: 'Too many attempts. Please try again later.',
+}
+
 type BetaPageProps = {
   searchParams: Promise<{ error?: string }>
 }
 
 export default async function BetaPage({ searchParams }: BetaPageProps) {
   const params = await searchParams
-  const error = params.error ?? null
+  const error = params.error ? (ERROR_MESSAGES[params.error] ?? 'An error occurred.') : null
 
   return (
     <main className="min-h-screen bg-background px-6 py-16 text-foreground sm:px-10">
