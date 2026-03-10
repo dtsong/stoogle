@@ -17,20 +17,17 @@
     { "url": "https://apologetics315.com", "name": "Apologetics 315", "description": "Apologetics links and content", "categories": ["apologetics"] },
 
     { "url": "https://ccef.org", "name": "CCEF", "description": "Biblical counseling training and articles", "categories": ["biblical-counseling"] },
-    { "url": "https://biblicalcounseling.com", "name": "ACBC", "description": "Association of Certified Biblical Counselors", "categories": ["biblical-counseling"] },
-    { "url": "https://peacemaker.net", "name": "Peacemaker Ministries", "description": "Conflict resolution and counseling resources", "categories": ["biblical-counseling"] },
     { "url": "https://ibcd.org", "name": "IBCD", "description": "Institute for Biblical Counseling and Discipleship", "categories": ["biblical-counseling"] },
 
     { "url": "https://answersingenesis.org", "name": "Answers in Genesis", "description": "Creation and origins resources", "categories": ["creation-origins"] },
     { "url": "https://creation.com", "name": "Creation Ministries International", "description": "Creation resources", "categories": ["creation-origins"] },
     { "url": "https://icr.org", "name": "Institute for Creation Research", "description": "Creation research and apologetics", "categories": ["creation-origins"] },
 
-    { "url": "https://gty.org", "name": "Grace to You", "description": "John MacArthur sermons and resources", "categories": ["john-macarthur-tms"] },
     { "url": "https://tms.edu", "name": "The Master's Seminary", "description": "Seminary resources and articles", "categories": ["john-macarthur-tms"] },
     { "url": "https://tmu.edu", "name": "The Master's University", "description": "University resources and articles", "categories": ["john-macarthur-tms"] },
 
     { "url": "https://albertmohler.com", "name": "Albert Mohler", "description": "Articles and commentary", "categories": ["albert-mohler-sbts"] },
-    { "url": "https://sbts.edu", "name": "Southern Baptist Theological Seminary", "description": "Seminary articles and resources", "categories": ["albert-mohler-sbts"] },
+    { "url": "https://www.sbts.edu", "name": "Southern Baptist Theological Seminary", "description": "Seminary articles and resources", "categories": ["albert-mohler-sbts"] },
     { "url": "https://equip.sbts.edu", "name": "EQUIP SBTS", "description": "SBTS content and resources", "categories": ["albert-mohler-sbts"] },
 
     { "url": "https://desiringgod.org", "name": "Desiring God", "description": "General Christian ministry resources", "categories": ["general-ministry"] },
@@ -57,8 +54,6 @@
     { "url": "https://founders.org", "name": "Founders Ministries", "description": "Reformed Baptist resources", "categories": ["general-ministry"] },
     { "url": "https://aomin.org", "name": "Alpha and Omega Ministries", "description": "Apologetics and theology resources", "categories": ["general-ministry"] },
     { "url": "https://triablogue.blogspot.com", "name": "Triablogue", "description": "Blog commentary and theology", "categories": ["general-ministry"] },
-    { "url": "https://prbible.org", "name": "Puritan Reformed Bible", "description": "Bible and study resources", "categories": ["general-ministry"] },
-    { "url": "https://gracebible.org", "name": "Grace Bible", "description": "Church teaching resources", "categories": ["general-ministry"] },
     { "url": "https://sermonaudio.com", "name": "SermonAudio", "description": "Sermons and media library", "categories": ["general-ministry"] },
     { "url": "https://heartcrymissionary.com", "name": "HeartCry Missionary Society", "description": "Mission and ministry content", "categories": ["general-ministry"] },
     { "url": "https://gbc.org", "name": "Grace Bible Church", "description": "Church resources", "categories": ["general-ministry"] },

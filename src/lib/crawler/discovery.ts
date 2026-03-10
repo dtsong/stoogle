@@ -249,9 +249,14 @@ async function discoverFromSitemaps(
 
     if (isSitemapIndex) {
       for (const loc of locs) {
+        if (discovered.length >= pageCap) break
         const normalized = normalizeUrl(loc, currentSitemap)
         if (!normalized) continue
+        if (seenSitemaps.has(normalized)) continue
         queue.push(normalized)
+        // Stop queuing child sitemaps once we have enough to likely fill the page cap.
+        // Each sitemap typically contains 100+ URLs, so a small multiple of pageCap suffices.
+        if (queue.length >= pageCap * 3) break
       }
       continue
     }

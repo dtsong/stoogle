@@ -71,6 +71,8 @@ export type SearchIndex = {
   removeBySiteDomain(siteDomain: string): Promise<void>
 }
 
+const EXTRACTION_INTERVAL_MS = 2000
+
 type PipelineDependencies = {
   repository: CrawlRepository
   index: SearchIndex
@@ -79,6 +81,7 @@ type PipelineDependencies = {
   now?: () => Date
   onEvent?: CrawlEventCallback
   perfNow?: () => number
+  sleepFn?: (ms: number) => Promise<void>
 }
 
 export type CrawlRunResult = {
@@ -110,6 +113,7 @@ export async function runSiteCrawl(
   const now = deps.now ?? defaultNow
   const emit = deps.onEvent ?? (() => {})
   const perfNow = deps.perfNow ?? (() => performance.now())
+  const sleep = deps.sleepFn ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)))
 
   const siteStartTime = perfNow()
 
@@ -187,6 +191,10 @@ export async function runSiteCrawl(
       }
 
       pagesProcessed += 1
+
+      if (pagesProcessed > 1) {
+        await sleep(EXTRACTION_INTERVAL_MS)
+      }
 
       try {
         const extractStart = perfNow()

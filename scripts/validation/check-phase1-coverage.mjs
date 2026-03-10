@@ -136,7 +136,7 @@ async function main() {
 
   console.log(JSON.stringify(summary, null, 2))
 
-  if (activeSiteCount < 50 || completedJobs < 50 || missingIndexedDomains.length > 0) {
+  if (activeSiteCount < 45 || completedJobs < 45 || missingIndexedDomains.length > 0) {
     process.exit(1)
   }
 }

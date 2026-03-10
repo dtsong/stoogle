@@ -104,7 +104,7 @@ async function main() {
     throw new Error(`Failed to upsert site_categories: ${mappingError.message}`)
   }
 
-  console.log('Seeded phase 1 data (50 sites, 6 categories) successfully.')
+  console.log(`Seeded phase 1 data (${seedData.sites.length} sites, ${seedData.categories.length} categories) successfully.`)
 }
 
 main().catch((error) => {

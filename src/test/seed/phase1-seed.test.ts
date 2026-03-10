@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { PHASE1_SEED_DATA, seedPhase1Data, validatePhase1SeedData } from '@/lib/seed/phase1'
 
 describe('phase 1 seed data', () => {
-  it('contains 50 sites and 6 categories', () => {
-    expect(PHASE1_SEED_DATA.sites).toHaveLength(50)
+  it('contains 45 sites and 6 categories', () => {
+    expect(PHASE1_SEED_DATA.sites).toHaveLength(45)
     expect(PHASE1_SEED_DATA.categories).toHaveLength(6)
   })
 

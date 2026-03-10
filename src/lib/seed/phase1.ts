@@ -26,8 +26,8 @@ export function validatePhase1SeedData(data: Phase1SeedData): void {
     throw new Error(`Expected 6 categories, got ${data.categories.length}`)
   }
 
-  if (data.sites.length !== 50) {
-    throw new Error(`Expected 50 sites, got ${data.sites.length}`)
+  if (data.sites.length !== 45) {
+    throw new Error(`Expected 45 sites, got ${data.sites.length}`)
   }
 
   const uniqueUrls = new Set(data.sites.map((site) => site.url))
